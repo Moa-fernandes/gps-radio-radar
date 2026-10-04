@@ -1,75 +1,32 @@
-# React + TypeScript + Vite
+# 🌍 Global GPS Radio Radar
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[🇺🇸 English Version Below](#-english-version)
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🇧🇷 Versão em Português
 
-## React Compiler
+Uma aplicação web imersiva em 3D que simula um radar de rádio global em tempo real, inspirada no conceito do *Radio Garden*. O projeto permite explorar o planeta através de um globo terrestre interativo, sintonizar mais de 2.000 estações de rádio reais ao redor do mundo, visualizar o fuso horário local atualizado segundo a segundo e controlar a transmissão através de uma interface de painel futurista (*Glassmorphism*).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🚀 Tecnologias Utilizadas
+Este projeto foi arquitetado aplicando padrões modernos de engenharia de software e alta performance:
+* **Frontend:** React.js, TypeScript
+* **Motor 3D & Visualização:** `react-globe.gl`, Three.js
+* **Streaming & Áudio:** Howler.js (otimizado para fluxos de rádio contínuos e prevenção de CORS)
+* **Estilização & UI:** CSS Modular com design responsivo, temas escuros e efeito de vidro fosco (*Glassmorphism*)
+* **Dados de Estações:** Integração em tempo real com a API global *Radio Browser* + sistema de Fallback local seguro.
 
-## Expanding the ESLint configuration
+### ✨ Funcionalidades
+* **Globo Terrestre 3D Interativo:** Renderização de alta fidelidade com texturas da NASA, topografia e espaço sideral.
+* **Radar Pulsante:** Pontos com animação em anel (*rings*) indicando atividade de transmissão ao vivo.
+* **Diretório Global (Sidebar Dropdown):** Menu lateral retrátil e translúcido organizado por países e cidades.
+* **Navegação GPS Automatizada:** Ao clicar em qualquer rádio na lista ou no globo, a câmera executa um voo orbital suave até as coordenadas exatas da estação.
+* **Player com Fuso Horário Local:** Relógio dinâmico que calcula e exibe a hora exata no fuso horário do país de transmissão em tempo real.
+* **Controles de Zoom:** Botões flutuantes para aproximação e afastamento rápido da câmera.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### ⚙️ Como Executar Localmente
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+1. Clone o repositório:
+   ```bash
+   git clone [https://github.com/SEU_USUARIO/gps-radio-radar.git](https://github.com/SEU_USUARIO/gps-radio-radar.git)
+   cd gps-radio-radar/frontend
