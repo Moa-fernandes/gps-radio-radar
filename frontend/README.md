@@ -30,3 +30,61 @@ Este projeto foi arquitetado aplicando padrões modernos de engenharia de softwa
    ```bash
    git clone [https://github.com/SEU_USUARIO/gps-radio-radar.git](https://github.com/SEU_USUARIO/gps-radio-radar.git)
    cd gps-radio-radar/frontend
+
+Instale as dependências:
+
+Bash
+npm install
+Inicie o servidor de desenvolvimento:
+
+Bash
+npm run dev
+Acesse no navegador: http://localhost:5173
+
+🇺🇸 English Version
+An immersive 3D web application simulating a real-time global radio radar, inspired by Radio Garden. The project allows users to explore the planet through an interactive 3D globe, tune into over 2,000 real radio stations worldwide, track live local time down to the second, and manage audio streaming via a futuristic glassmorphic UI.
+
+🚀 Tech Stack
+Built using modern software engineering standards for maximum performance and clean architecture:
+
+Frontend: React.js, TypeScript
+
+3D Engine & Rendering: react-globe.gl, Three.js
+
+Streaming & Audio: Howler.js (optimized for continuous radio streams and CORS mitigation)
+
+Styling & UI: Custom modular design featuring dark mode, responsive layouts, and glassmorphism.
+
+Radio Data: Real-time integration with the global Radio Browser API + secure local fallback datasets.
+
+✨ Key Features
+Interactive 3D Globe: High-fidelity rendering featuring NASA textures, topology, and a starry background.
+
+Pulsing Radar Effect: Animated rings highlighting active live broadcasting coordinates.
+
+Global Directory (Accordion Sidebar): Retractable, translucid side menu organized by countries and cities.
+
+Automated GPS Navigation: Clicking any station triggers a smooth orbital camera flight directly to its geographical location.
+
+Live Local Clock Player: Dynamic clock calculating and displaying the precise local time of the broadcasting target in real-time.
+
+Zoom Controls: Floating interface buttons for quick camera altitude adjustment.
+
+⚙️ Running Locally
+Clone the repository:
+
+Bash
+git clone [https://github.com/SEU_USUARIO/gps-radio-radar.git]
+cd gps-radio-radar/frontend
+Install dependencies:
+
+Bash
+npm install
+Start the development server:
+
+Bash
+npm run dev
+Open your browser at: http://localhost:5173
+
+📄 License & Copyright
+© 2026 Moacir Fernandes. All rights reserved.
