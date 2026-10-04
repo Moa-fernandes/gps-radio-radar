@@ -1,8 +1,7 @@
 # 🌍 Global GPS Radio Radar
 
-[🇺🇸 English Version Below](#-english-version)
 
----
+----------------------
 
 ## 🇧🇷 Versão em Português
 
