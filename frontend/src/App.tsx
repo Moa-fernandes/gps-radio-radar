@@ -9,7 +9,10 @@ export default function App() {
   const globeEl = useRef<any>(null);
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [currentStation, setCurrentStation] = useState<RadioStation | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // ALINHAMENTO: Iniciar com o Sidebar FECHADO (false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(true);
   
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -53,6 +56,9 @@ export default function App() {
       globeEl.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.4 }, 2000);
     }
   };
+
+  // CÓDIGO PIX OFICIAL (BR CODE) CALCULADO PARA O SEU E-MAIL
+  const pixPayloadEncoded = "00020126460014BR.GOV.BCB.PIX0124moacirsistemax%40gmail.com5204000053039865802BR5916Moacir%20Fernandes6014Rio%20de%20Janeiro62070503%2A%2A%2A63044DAB";
 
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
@@ -136,12 +142,15 @@ export default function App() {
           {isSidebarOpen ? '◀ HIDE DIRECTORY' : '☰ SHOW DIRECTORY'}
         </button>
 
-        <div style={{ color: '#06b6d4', fontFamily: 'sans-serif', pointerEvents: 'none', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '8px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, letterSpacing: '2px', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>GPS SYSTEM</h1>
-          <p style={{ margin: '4px 0 0 0', color: '#e2e8f0', fontSize: '11px', letterSpacing: '1px' }}>
-            NETWORK: <span style={{ color: '#10b981', fontWeight: 'bold' }}>ONLINE</span> | {stations.length} STATIONS
-          </p>
-        </div>
+        {/* Informações do GPS Sistema aparecem apenas se o diretório estiver aberto (opcional, ou deixe fixo) */}
+        {isSidebarOpen && (
+          <div style={{ color: '#06b6d4', fontFamily: 'sans-serif', pointerEvents: 'none', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '8px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, letterSpacing: '2px', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>GPS SYSTEM</h1>
+            <p style={{ margin: '4px 0 0 0', color: '#e2e8f0', fontSize: '11px', letterSpacing: '1px' }}>
+              NETWORK: <span style={{ color: '#10b981', fontWeight: 'bold' }}>ONLINE</span> | {stations.length} STATIONS
+            </p>
+          </div>
+        )}
       </div>
 
       <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 10 }}>
@@ -155,7 +164,6 @@ export default function App() {
         toggleFavorite={toggleFavorite}
       />
 
-      {/* FOOTER: PIX & QR CODE CORRIGIDO */}
       <div style={{
         position: 'absolute', bottom: 20, left: 20, zIndex: 20,
         display: 'flex', alignItems: 'center', gap: '15px',
@@ -163,11 +171,10 @@ export default function App() {
         border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
       }}>
-        {/* QR Code com fundo branco e desenho preto para garantir leitura universal */}
         <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)' }}>
           <img 
-            src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=moacirsistemax@gmail.com&color=000000&bgcolor=ffffff" 
-            alt="Pix QR Code" 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
+            alt="Pix QR Code Oficial" 
             style={{ width: '60px', height: '60px', display: 'block' }} 
           />
         </div>
