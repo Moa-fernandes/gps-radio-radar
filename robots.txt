@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://moa-fernandes.github.io/gps-radio-radar/sitemap.xml
