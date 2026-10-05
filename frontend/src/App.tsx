@@ -5,6 +5,27 @@ import Sidebar from './components/Sidebar';
 import { fetchGlobalStations } from './data/radios';
 import type { RadioStation } from './types';
 
+const WORLD_COUNTRIES = [
+  { name: 'Brazil', lat: -14.2350, lng: -51.9253 },
+  { name: 'United States', lat: 37.0902, lng: -95.7129 },
+  { name: 'Canada', lat: 56.1304, lng: -106.3468 },
+  { name: 'Argentina', lat: -38.4161, lng: -63.6167 },
+  { name: 'United Kingdom', lat: 55.3781, lng: -3.4360 },
+  { name: 'France', lat: 46.6034, lng: 1.8883 },
+  { name: 'Germany', lat: 51.1657, lng: 10.4515 },
+  { name: 'Spain', lat: 40.4637, lng: -3.7492 },
+  { name: 'Italy', lat: 41.8719, lng: 12.5674 },
+  { name: 'Russia', lat: 61.5240, lng: 105.3188 },
+  { name: 'China', lat: 35.8617, lng: 104.1954 },
+  { name: 'Japan', lat: 36.2048, lng: 138.2529 },
+  { name: 'Australia', lat: -25.2744, lng: 133.7751 },
+  { name: 'South Africa', lat: -30.5595, lng: 22.9375 },
+  { name: 'India', lat: 20.5937, lng: 78.9629 },
+  { name: 'Mexico', lat: 23.6345, lng: -102.5528 },
+  { name: 'Egypt', lat: 26.8206, lng: 30.8025 },
+  { name: 'Saudi Arabia', lat: 23.8859, lng: 45.0792 }
+];
+
 export default function App() {
   const globeEl = useRef<any>(null);
   const [stations, setStations] = useState<RadioStation[]>([]);
@@ -17,7 +38,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const SIDEBAR_WIDTH = 340;
+  const SIDEBAR_WIDTH = 320;
 
   useEffect(() => {
     fetchGlobalStations().then((data) => {
@@ -59,6 +80,7 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
       
+      {/* CSS RESPONSIVO PARA DISPOSITIVOS MÓVEIS */}
       <style>{`
         .globe-cursor-wrapper {
           position: absolute;
@@ -70,6 +92,59 @@ export default function App() {
         }
         .globe-cursor-wrapper canvas {
           cursor: inherit !important;
+        }
+
+        /* MEDIA QUERIES PARA CELULARES (Portrait e Landscape) */
+        @media (max-width: 768px) {
+          .sidebar-responsive {
+            width: 100vw !important;
+          }
+          .top-controls {
+            left: 15px !important;
+            top: 15px !important;
+          }
+          .player-responsive {
+            left: 15px !important;
+            right: 15px !important;
+            width: auto !important;
+            bottom: 105px !important;
+          }
+          .player-responsive > div {
+            width: 100% !important;
+            box-sizing: border-box;
+          }
+          .footer-responsive {
+            left: 15px !important;
+            right: 15px !important;
+            width: auto !important;
+            bottom: 15px !important;
+            padding: 8px 12px !important;
+          }
+          .footer-responsive img {
+            width: 45px !important;
+            height: 45px !important;
+          }
+        }
+
+        /* Ajustes especiais para celular deitado (Landscape) */
+        @media (max-height: 500px) and (max-width: 900px) {
+          .player-responsive {
+            bottom: 10px !important;
+            right: 15px !important;
+            left: auto !important;
+            width: 250px !important;
+          }
+          .footer-responsive {
+            bottom: 10px !important;
+            left: 15px !important;
+            right: auto !important;
+            width: 210px !important;
+            padding: 6px 8px !important;
+          }
+          .footer-responsive img {
+            width: 35px !important;
+            height: 35px !important;
+          }
         }
       `}</style>
 
@@ -84,7 +159,7 @@ export default function App() {
         </div>
       )}
 
-      {/* GLOBO FLUIDO E OTIMIZADO */}
+      {/* GLOBO COM NOME DOS PAÍSES */}
       <div className="globe-cursor-wrapper">
         <Globe
           ref={globeEl}
@@ -92,6 +167,16 @@ export default function App() {
           bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
           backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
           
+          labelsData={WORLD_COUNTRIES}
+          labelLat="lat"
+          labelLng="lng"
+          labelText="name"
+          labelSize={0.6}
+          labelDotRadius={0}
+          labelColor={() => 'rgba(241, 245, 249, 0.85)'}
+          labelAltitude={0.01}
+          labelResolution={2}
+
           pointsData={stations}
           pointLat="lat"
           pointLng="lng"
@@ -112,16 +197,19 @@ export default function App() {
         />
       </div>
 
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        stations={stations} 
-        onSelectStation={handleSelectStation} 
-        width={SIDEBAR_WIDTH} 
-        favorites={favorites}
-        toggleFavorite={toggleFavorite}
-      />
+      <div className="sidebar-responsive">
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          stations={stations} 
+          onSelectStation={handleSelectStation} 
+          width={SIDEBAR_WIDTH} 
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+        />
+      </div>
 
-      <div style={{
+      {/* BOTÃO E TÍTULO SUPERIOR */}
+      <div className="top-controls" style={{
         position: 'absolute', top: 20, 
         left: isSidebarOpen ? SIDEBAR_WIDTH + 20 : 20, 
         transition: 'left 0.4s cubic-bezier(0.4, 0, 0.2, 1)', 
@@ -149,38 +237,43 @@ export default function App() {
         )}
       </div>
 
+      {/* BOTÕES DE ZOOM */}
       <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 10 }}>
         <button onClick={() => handleZoom('in')} style={zoomBtnStyle}>+</button>
         <button onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
       </div>
 
-      <Player 
-        station={currentStation} 
-        favorites={favorites}
-        toggleFavorite={toggleFavorite}
-      />
+      {/* PLAYER DE ÁUDIO */}
+      <div className="player-responsive" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 25, width: '280px' }}>
+        <Player 
+          station={currentStation} 
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+        />
+      </div>
 
-      <div style={{
+      {/* FOOTER PIX E QR CODE */}
+      <div className="footer-responsive" style={{
         position: 'absolute', bottom: 20, left: 20, zIndex: 20,
-        display: 'flex', alignItems: 'center', gap: '15px',
-        background: 'rgba(2, 6, 23, 0.75)', padding: '12px 16px', borderRadius: '12px',
+        display: 'flex', alignItems: 'center', gap: '12px',
+        background: 'rgba(2, 6, 23, 0.85)', padding: '10px 14px', borderRadius: '12px',
         border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
       }}>
-        <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)' }}>
+        <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
             alt="Pix QR Code" 
-            style={{ width: '60px', height: '60px', display: 'block' }} 
+            style={{ width: '55px', height: '55px', display: 'block' }} 
           />
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span style={{ color: '#fbbf24', fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT THIS PROJECT</span>
-          <span style={{ color: '#f8fafc', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            PIX: <strong style={{ color: '#06b6d4', letterSpacing: '0.5px' }}>moacirsistemax@gmail.com</strong>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
+          <span style={{ color: '#fbbf24', fontSize: '9px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
+          <span style={{ color: '#f8fafc', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            PIX: <strong style={{ color: '#06b6d4' }}>moacirsistemax@gmail.com</strong>
           </span>
-          <span style={{ color: '#64748b', fontSize: '10px', marginTop: '2px' }}>© 2026 Moacir Fernandes</span>
+          <span style={{ color: '#64748b', fontSize: '9px' }}>© 2026 Moacir Fernandes</span>
         </div>
       </div>
     </div>
