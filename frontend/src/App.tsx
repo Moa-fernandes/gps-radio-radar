@@ -12,7 +12,7 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Estado de favoritos salvo localmente
+  // Favorites State (LocalStorage)
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('gps_favorites');
     return saved ? JSON.parse(saved) : [];
@@ -29,7 +29,6 @@ export default function App() {
     });
   }, []);
 
-  // Salva no localStorage sempre que os favoritos mudarem
   useEffect(() => {
     localStorage.setItem('gps_favorites', JSON.stringify(favorites));
   }, [favorites]);
@@ -59,14 +58,15 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
       
+      {/* LOADING SCREEN */}
       {isLoading && (
         <div style={{
           position: 'absolute', inset: 0, background: '#020617', zIndex: 100,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           color: '#06b6d4', fontFamily: 'sans-serif'
         }}>
-          <h2 style={{ fontSize: '20px', letterSpacing: '2px', marginBottom: '8px' }}>CARREGANDO RADAR GPS...</h2>
-          <p style={{ color: '#94a3b8', fontSize: '12px' }}>Sintonizando frequências globais.</p>
+          <h2 style={{ fontSize: '26px', letterSpacing: '3px', marginBottom: '8px', color: '#f8fafc' }}>Welcome RadioMoa</h2>
+          <p style={{ color: '#06b6d4', fontSize: '14px', letterSpacing: '2px', fontWeight: 600 }}>Loading... GPS</p>
         </div>
       )}
 
@@ -79,7 +79,6 @@ export default function App() {
         pointsData={stations}
         pointLat="lat"
         pointLng="lng"
-        // Rádios favoritas ficam em destaque (dourado)
         pointColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
         pointAltitude={0.01}
         pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.2 : 0.12}
@@ -105,6 +104,7 @@ export default function App() {
         toggleFavorite={toggleFavorite}
       />
 
+      {/* HEADER / FLOATING MENU */}
       <div style={{
         position: 'absolute', top: 20, 
         left: isSidebarOpen ? SIDEBAR_WIDTH + 20 : 20, 
@@ -120,13 +120,13 @@ export default function App() {
             boxShadow: '0 4px 15px rgba(0,0,0,0.5)', outline: 'none', width: 'fit-content'
           }}
         >
-          {isSidebarOpen ? '◀ RECOLHER DIRETÓRIO' : '☰ MOSTRAR DIRETÓRIO'}
+          {isSidebarOpen ? '◀ HIDE DIRECTORY' : '☰ SHOW DIRECTORY'}
         </button>
 
         <div style={{ color: '#06b6d4', fontFamily: 'sans-serif', pointerEvents: 'none', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '8px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, letterSpacing: '2px', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>SISTEMA GPS</h1>
+          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, letterSpacing: '2px', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>GPS SYSTEM</h1>
           <p style={{ margin: '4px 0 0 0', color: '#e2e8f0', fontSize: '11px', letterSpacing: '1px' }}>
-            REDE: <span style={{ color: '#10b981', fontWeight: 'bold' }}>ONLINE</span> | {stations.length} ESTAÇÕES
+            NETWORK: <span style={{ color: '#10b981', fontWeight: 'bold' }}>ONLINE</span> | {stations.length} STATIONS
           </p>
         </div>
       </div>
@@ -142,13 +142,26 @@ export default function App() {
         toggleFavorite={toggleFavorite}
       />
 
+      {/* FOOTER: PIX & QR CODE */}
       <div style={{
-        position: 'absolute', bottom: 15, left: 20, zIndex: 20,
-        color: '#64748b', fontFamily: 'sans-serif', fontSize: '11px', letterSpacing: '1px',
-        pointerEvents: 'none', background: 'rgba(2, 6, 23, 0.6)', padding: '6px 12px', borderRadius: '4px',
-        border: '1px solid rgba(255,255,255,0.03)', backdropFilter: 'blur(4px)'
+        position: 'absolute', bottom: 20, left: 20, zIndex: 20,
+        display: 'flex', alignItems: 'center', gap: '15px',
+        background: 'rgba(2, 6, 23, 0.75)', padding: '12px 16px', borderRadius: '12px',
+        border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
       }}>
-        © 2026 Moacir Fernandes. Todos os direitos reservados.
+        <img 
+          src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=moacirsistemax@gmail.com&color=06b6d4&bgcolor=020617" 
+          alt="Pix QR Code" 
+          style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.5)' }} 
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ color: '#fbbf24', fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT THIS PROJECT</span>
+          <span style={{ color: '#f8fafc', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            PIX: <strong style={{ color: '#06b6d4', letterSpacing: '0.5px' }}>moacirsistemax@gmail.com</strong>
+          </span>
+          <span style={{ color: '#64748b', fontSize: '10px', marginTop: '2px' }}>© 2026 Moacir Fernandes</span>
+        </div>
       </div>
     </div>
   );

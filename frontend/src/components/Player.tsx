@@ -33,7 +33,7 @@ export default function Player({ station, favorites, toggleFavorite }: PlayerPro
     if (!station?.tz) return;
     const updateTime = () => {
       try {
-        setLocalTime(new Date().toLocaleTimeString('pt-BR', { timeZone: station.tz }));
+        setLocalTime(new Date().toLocaleTimeString('en-US', { timeZone: station.tz }));
       } catch (e) { setLocalTime('N/A'); }
     };
     updateTime();
@@ -57,7 +57,7 @@ export default function Player({ station, favorites, toggleFavorite }: PlayerPro
       backdropFilter: 'blur(16px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '10px', letterSpacing: '1px', color: '#94a3b8' }}>CONEXÃO ATIVA</span>
+        <span style={{ fontSize: '10px', letterSpacing: '1px', color: '#94a3b8' }}>ACTIVE CONNECTION</span>
         <span style={{ fontSize: '10px', color: isPlaying ? '#06b6d4' : '#f43f5e', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: isPlaying ? '#06b6d4' : '#f43f5e', boxShadow: `0 0 5px ${isPlaying ? '#06b6d4' : '#f43f5e'}` }}></span>
           {isPlaying ? 'LIVE' : 'OFFLINE'}
@@ -74,22 +74,22 @@ export default function Player({ station, favorites, toggleFavorite }: PlayerPro
         <button 
           onClick={() => toggleFavorite(station.streamUrl)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', outline: 'none', color: isFav ? '#fbbf24' : 'rgba(255,255,255,0.2)' }}
-          title="Marcar como favorita"
+          title="Mark as favorite"
         >
           {isFav ? '★' : '☆'}
         </button>
       </div>
       
       <div style={{ background: 'rgba(2, 6, 23, 0.5)', padding: '10px', borderRadius: '8px', textAlign: 'center', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px', letterSpacing: '0.5px' }}>HORA LOCAL DO TRANSMISSOR</div>
+        <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px', letterSpacing: '0.5px' }}>TRANSMITTER LOCAL TIME</div>
         <div style={{ fontSize: '24px', color: '#06b6d4', fontWeight: 300, letterSpacing: '1.5px', fontFamily: 'monospace' }}>
           {localTime}
         </div>
       </div>
       
       <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Frequência:</span> <span style={{ color: '#f8fafc', fontWeight: 500 }}>{station.genre}</span></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Qualidade:</span> <span style={{ color: '#f8fafc', fontWeight: 500 }}>{station.bitrate}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Genre:</span> <span style={{ color: '#f8fafc', fontWeight: 500 }}>{station.genre}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Bitrate:</span> <span style={{ color: '#f8fafc', fontWeight: 500 }}>{station.bitrate}</span></div>
       </div>
 
       <button onClick={togglePlay} style={{ 
@@ -99,7 +99,7 @@ export default function Player({ station, favorites, toggleFavorite }: PlayerPro
         padding: '10px 0', width: '100%', cursor: 'pointer', fontWeight: 600, fontSize: '11px', 
         borderRadius: '6px', letterSpacing: '1px', transition: 'all 0.2s', outline: 'none'
       }}>
-        {isPlaying ? 'INTERROMPER ÁUDIO' : 'CONECTAR ÁUDIO'}
+        {isPlaying ? 'STOP AUDIO' : 'CONNECT AUDIO'}
       </button>
     </div>
   );

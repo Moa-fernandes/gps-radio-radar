@@ -19,20 +19,19 @@ export default function Sidebar({ isOpen, stations, onSelectStation, width, favo
     return acc;
   }, {});
 
-  // Cria um grupo especial de favoritos no topo
+  // Favorites group at the top
   const favStations = stations.filter(s => favorites.includes(s.streamUrl));
   if (favStations.length > 0) {
-    groupedStations['⭐ Favoritos'] = favStations;
+    groupedStations['⭐ Favorites'] = favStations;
   }
 
   const toggleCountry = (country: string) => {
     setExpandedCountry(expandedCountry === country ? null : country);
   };
 
-  // Garante que "⭐ Favoritos" seja sempre o primeiro da lista
   const sortedCountries = Object.keys(groupedStations).sort((a, b) => {
-    if (a === '⭐ Favoritos') return -1;
-    if (b === '⭐ Favoritos') return 1;
+    if (a === '⭐ Favorites') return -1;
+    if (b === '⭐ Favorites') return 1;
     return a.localeCompare(b);
   });
 
@@ -49,7 +48,7 @@ export default function Sidebar({ isOpen, stations, onSelectStation, width, favo
     }}>
       <div style={{ width: width, padding: '24px 20px', boxSizing: 'border-box', opacity: isOpen ? 1 : 0, transition: 'opacity 0.3s ease-in-out' }}>
         <h2 style={{ borderBottom: '1px solid rgba(6, 182, 212, 0.4)', paddingBottom: '12px', marginTop: 0, fontSize: '14px', fontWeight: 700, letterSpacing: '2px', color: '#06b6d4', fontFamily: 'sans-serif' }}>
-          DIRETÓRIO GLOBAL
+          GLOBAL DIRECTORY
         </h2>
         
         {sortedCountries.map(country => (
@@ -65,7 +64,7 @@ export default function Sidebar({ isOpen, stations, onSelectStation, width, favo
                 letterSpacing: '1px', transition: 'all 0.2s', outline: 'none', boxSizing: 'border-box'
               }}
             >
-              <span style={{ color: country === '⭐ Favoritos' ? '#fbbf24' : 'inherit' }}>
+              <span style={{ color: country === '⭐ Favorites' ? '#fbbf24' : 'inherit' }}>
                 {country.toUpperCase()}
               </span>
               <span style={{ fontSize: '10px', background: 'rgba(0,0,0,0.4)', padding: '3px 8px', borderRadius: '12px', border: '1px solid rgba(6,182,212,0.3)' }}>
@@ -102,7 +101,7 @@ export default function Sidebar({ isOpen, stations, onSelectStation, width, favo
                         <span style={{ color: '#ffffff', fontWeight: 600, fontSize: '12px', letterSpacing: '0.5px' }}>{radio.city}</span>
                         <button 
                           onClick={(e) => {
-                            e.stopPropagation(); // Impede que clicar na estrela ative a rádio
+                            e.stopPropagation();
                             toggleFavorite(radio.streamUrl);
                           }}
                           style={{
