@@ -5,22 +5,6 @@ import Sidebar from './components/Sidebar';
 import { fetchGlobalStations } from './data/radios';
 import type { RadioStation } from './types';
 
-// Principais países globais com coordenadas centrais para o modo "visão de longe" estilo Google Earth
-const COUNTRIES_OVERVIEW = [
-  { name: 'BRAZIL', lat: -14.2350, lng: -51.9253 },
-  { name: 'USA', lat: 37.0902, lng: -95.7129 },
-  { name: 'FRANCE', lat: 46.6034, lng: 1.8883 },
-  { name: 'GERMANY', lat: 51.1657, lng: 10.4515 },
-  { name: 'UNITED KINGDOM', lat: 55.3781, lng: -3.4360 },
-  { name: 'JAPAN', lat: 36.2048, lng: 138.2529 },
-  { name: 'AUSTRALIA', lat: -25.2744, lng: 133.7751 },
-  { name: 'CANADA', lat: 56.1304, lng: -106.3468 },
-  { name: 'ARGENTINA', lat: -38.4161, lng: -63.6167 },
-  { name: 'SOUTH AFRICA', lat: -30.5595, lng: 22.9375 },
-  { name: 'SPAIN', lat: 40.4637, lng: -3.7492 },
-  { name: 'ITALY', lat: 41.8719, lng: 12.5674 }
-];
-
 export default function App() {
   const globeEl = useRef<any>(null);
   const [stations, setStations] = useState<RadioStation[]>([]);
@@ -28,9 +12,6 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Controla a altitude atual do globo para decidir se mostra países ou cidades
-  const [globeAltitude, setGlobeAltitude] = useState<number>(2.5);
-
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('gps_favorites');
     return saved ? JSON.parse(saved) : [];
@@ -64,14 +45,12 @@ export default function App() {
     const currentPov = globeEl.current.pointOfView();
     const newAltitude = direction === 'in' ? Math.max(0.1, currentPov.altitude - 0.5) : Math.min(4, currentPov.altitude + 0.5);
     globeEl.current.pointOfView({ ...currentPov, altitude: newAltitude }, 500);
-    setGlobeAltitude(newAltitude);
   };
 
   const handleSelectStation = (station: RadioStation) => {
     setCurrentStation(station);
     if (globeEl.current) {
       globeEl.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.4 }, 2000);
-      setGlobeAltitude(0.4);
     }
   };
 
@@ -105,6 +84,7 @@ export default function App() {
         </div>
       )}
 
+      {/* GLOBO FLUIDO E OTIMIZADO */}
       <div className="globe-cursor-wrapper">
         <Globe
           ref={globeEl}
@@ -128,24 +108,7 @@ export default function App() {
           ringPropagationSpeed={1.5}
           ringRepeatPeriod={1200}
           
-          // ESTRUTURA ESTILO GOOGLE EARTH:
-          // Se o usuário estiver afastado (altitude > 1.2), mostra apenas os nomes dos países.
-          // Se aproximar o zoom (altitude <= 1.2), mostra os nomes detalhados das cidades/rádios.
-          labelsData={globeAltitude > 1.2 ? COUNTRIES_OVERVIEW : stations}
-          labelLat="lat"
-          labelLng="lng"
-          labelText={(d: any) => globeAltitude > 1.2 ? d.name : d.city}
-          labelSize={() => globeAltitude > 1.2 ? 0.7 : 0.4}
-          labelDotRadius={0}
-          labelColor={(d: any) => globeAltitude > 1.2 ? 'rgba(255, 255, 255, 0.75)' : (favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4')}
-          labelAltitude={0.02}
-          labelResolution={2}
-
           onPointClick={(point) => handleSelectStation(point as RadioStation)}
-          onLabelClick={(label) => {
-            if (globeAltitude <= 1.2) handleSelectStation(label as RadioStation);
-          }}
-          onZoom={({ altitude }) => setGlobeAltitude(altitude)}
         />
       </div>
 
