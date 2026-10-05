@@ -31,6 +31,7 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Deteta se é dispositivo móvel para lógicas de JavaScript (como o Sidebar fechar ao clicar)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const SIDEBAR_WIDTH = 340; // No telemóvel a Sidebar ocupará 100vw, gerido no Sidebar.tsx
+  const SIDEBAR_WIDTH = 340; 
 
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('gps_favorites');
@@ -73,77 +74,115 @@ export default function App() {
     if (globeEl.current) {
       globeEl.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.4 }, 2000);
     }
-    // Fecha a sidebar no telemóvel ao selecionar rádio
     if (isMobile) setIsSidebarOpen(false);
   };
 
   const pixPayloadEncoded = "00020126460014BR.GOV.BCB.PIX0124moacirsistemax%40gmail.com5204000053039865802BR5916Moacir%20Fernandes6014Rio%20de%20Janeiro62070503%2A%2A%2A63044DAB";
 
   return (
-    <div style={{ width: '100vw', height: '100vh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100dvh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
       
+      {/* 
+        A MÁGICA DA RESPONSIVIDADE ACONTECE AQUI:
+        Uso de Media Queries precisas e '100dvh' para ignorar as barras do navegador no mobile.
+      */}
       <style>{`
-        .globe-cursor-wrapper { position: absolute; inset: 0; cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:26px'><text y='26'>🦅</text></svg>") 16 16, auto !important; }
-        .globe-cursor-wrapper:active { cursor: grabbing !important; }
-        .globe-cursor-wrapper canvas { cursor: inherit !important; }
-
-        /* Esconder UI no mobile se a sidebar estiver aberta (para não colidir visualmente) */
-        .hide-on-mobile-sidebar {
-          display: flex;
+        /* Cursor Personalizado (só aparece em ecrãs com rato) */
+        @media (hover: hover) and (pointer: fine) {
+          .globe-cursor-wrapper { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:26px'><text y='26'>🦅</text></svg>") 16 16, auto !important; }
+          .globe-cursor-wrapper:active { cursor: grabbing !important; }
+          .globe-cursor-wrapper canvas { cursor: inherit !important; }
         }
 
-        @media (max-width: 768px) {
-          .zoom-controls { display: none !important; } /* Oculta +/- no telemóvel */
-          
-          /* Se a sidebar estiver aberta, esconde os controlos inferiores para não sobrepor */
-          .sidebar-open .hide-on-mobile-sidebar {
-            display: none !important;
-          }
+        .globe-cursor-wrapper { position: absolute; inset: 0; }
 
-          .player-container {
-            bottom: auto !important;
-            top: 70px !important; /* Move o player para o topo no telemóvel */
-            right: 15px !important;
-            left: 15px !important;
-            width: auto !important;
-          }
-          
-          .player-container > div {
-            width: 100% !important;
-            box-sizing: border-box;
-          }
-
-          .footer-container {
-            left: 15px !important;
-            right: 15px !important;
-            bottom: 15px !important;
-            padding: 8px 12px !important;
-            flex-direction: row !important;
-          }
+        /* --- CLASSES BASE (DESKTOP) --- */
+        .ui-container {
+          position: absolute; inset: 0; padding: 20px;
+          pointer-events: none; /* Deixa o clique passar para o globo */
+          display: grid;
+          grid-template-areas: 
+            "top-left top-right"
+            "mid-left mid-right"
+            "bottom-left bottom-right";
+          grid-template-rows: auto 1fr auto;
+          grid-template-columns: 1fr auto;
+          z-index: 30;
         }
         
-        /* Landscape Mobile */
-        @media (max-height: 500px) and (orientation: landscape) {
-          .player-container {
-            top: auto !important;
-            bottom: 15px !important;
-            right: 15px !important;
-            left: auto !important;
-            width: 250px !important;
-            transform: scale(0.9);
-            transform-origin: bottom right;
+        .ui-container > * { pointer-events: auto; } /* Ativa os cliques nos botões/UI */
+
+        .top-left-area { grid-area: top-left; display: flex; flex-direction: column; gap: 10px; transition: transform 0.3s ease; }
+        .mid-right-area { grid-area: mid-right; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+        .bottom-left-area { grid-area: bottom-left; align-self: flex-end; }
+        .bottom-right-area { grid-area: bottom-right; align-self: flex-end; }
+
+        /* Ajuste do botão do Menu quando a sidebar abre no Desktop */
+        @media (min-width: 769px) {
+          .menu-shifted { transform: translateX(360px); }
+        }
+
+        /* --- RESPONSIVIDADE MOBILE (PORTRAIT / EM PÉ) --- */
+        @media (max-width: 768px) and (orientation: portrait) {
+          .ui-container {
+            padding: 15px 15px max(15px, env(safe-area-inset-bottom)); /* Previne corte pela barra do Android/iOS */
+            grid-template-areas: 
+              "top-left mid-right"
+              "player player"
+              "bottom-left bottom-left";
+            grid-template-rows: auto 1fr auto;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
           }
-          .footer-container {
-            left: 15px !important;
-            bottom: 15px !important;
-            width: 250px !important;
-            padding: 8px !important;
-            transform: scale(0.9);
-            transform-origin: bottom left;
+
+          /* O botão do menu fica sempre fixo em cima à esquerda, mesmo com sidebar aberta */
+          .top-left-area { transform: none !important; z-index: 60; }
+          
+          /* Os botões de zoom sobem para o topo à direita */
+          .mid-right-area { justify-content: flex-start; }
+          .zoom-btn { width: 38px !important; height: 38px !important; fontSize: 20px !important; }
+
+          /* O Player de áudio move-se para o meio, logo acima do Pix */
+          .bottom-right-area { grid-area: player; width: 100%; align-self: end; margin-bottom: 10px; }
+          .player-wrapper > div { width: 100% !important; box-sizing: border-box; } /* Força o player a ocupar a largura total */
+
+          /* O QR Code (Pix) ocupa a largura total na base */
+          .bottom-left-area { width: 100%; }
+          .pix-box { width: 100%; box-sizing: border-box; padding: 10px !important; }
+          .pix-box img { width: 45px !important; height: 45px !important; }
+
+          /* Se a Sidebar estiver aberta no mobile, esconde o Player e o Pix para não poluir o ecrã */
+          .hide-when-sidebar-open { display: none !important; }
+        }
+
+        /* --- RESPONSIVIDADE MOBILE (LANDSCAPE / DEITADO) --- */
+        @media (max-height: 500px) and (max-width: 950px) and (orientation: landscape) {
+          .ui-container {
+            padding: 10px 15px max(10px, env(safe-area-inset-bottom));
+            grid-template-areas: 
+              "top-left mid-right"
+              "bottom-left bottom-right";
+            grid-template-rows: 1fr auto;
+            grid-template-columns: 1fr auto;
           }
+          
+          .top-left-area { transform: none !important; z-index: 60; }
+          
+          /* Reduz o tamanho do Pix para caber melhor */
+          .bottom-left-area { align-self: end; }
+          .pix-box { padding: 8px 12px !important; }
+          .pix-box img { width: 35px !important; height: 35px !important; }
+          .pix-texts { transform: scale(0.85); transform-origin: left center; }
+
+          /* Reduz e posiciona o player no canto inferior direito */
+          .bottom-right-area { align-self: end; }
+          .player-wrapper { transform: scale(0.8); transform-origin: bottom right; width: 300px; margin-right: -20px; margin-bottom: -10px; }
+
+          .hide-when-sidebar-open { display: none !important; }
         }
       `}</style>
 
+      {/* TELA DE LOADING */}
       {isLoading && (
         <div style={{ position: 'absolute', inset: 0, background: '#020617', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', fontFamily: 'sans-serif' }}>
           <h2 style={{ fontSize: '26px', letterSpacing: '3px', marginBottom: '8px', color: '#f8fafc' }}>Welcome RadioMoa</h2>
@@ -189,19 +228,16 @@ export default function App() {
         />
       </div>
 
-      {/* Envolvente principal para controlo de classes no telemóvel */}
-      <div className={isSidebarOpen ? "sidebar-open" : ""}>
-        
+      {/* SIDEBAR (Por baixo da UI Container, mas recebe cliques) */}
+      <div style={{ position: 'absolute', zIndex: 20, top: 0, left: 0 }}>
         <Sidebar isOpen={isSidebarOpen} stations={stations} onSelectStation={handleSelectStation} width={SIDEBAR_WIDTH} favorites={favorites} toggleFavorite={toggleFavorite} />
+      </div>
 
-        {/* BOTÃO DO MENU (SEMPRE VISÍVEL POR CIMA DE TUDO - Z-INDEX 60) */}
-        <div style={{
-          position: 'absolute', top: 15, 
-          // Se for mobile, fica na esquerda, se desktop, empurra consoante a largura da sidebar
-          left: isMobile ? 15 : (isSidebarOpen ? SIDEBAR_WIDTH + 20 : 20), 
-          transition: 'left 0.3s ease-out', 
-          zIndex: 60, display: 'flex', flexDirection: 'column', gap: '15px'
-        }}>
+      {/* UI CONTAINER (Grelha Responsiva) */}
+      <div className="ui-container">
+        
+        {/* TOPO ESQUERDA: Botão Menu */}
+        <div className={`top-left-area ${isSidebarOpen && !isMobile ? 'menu-shifted' : ''}`}>
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             style={{
@@ -215,40 +251,44 @@ export default function App() {
           </button>
         </div>
 
-        {/* ZOOM CONTROLS (Ocultos no Mobile) */}
-        <div className="zoom-controls" style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 10 }}>
-          <button onClick={() => handleZoom('in')} style={zoomBtnStyle}>+</button>
-          <button onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
+        {/* MEIO DIREITA: Zoom Controls (Restaurados para mobile) */}
+        <div className="mid-right-area">
+          <button className="zoom-btn" onClick={() => handleZoom('in')} style={zoomBtnStyle}>+</button>
+          <button className="zoom-btn" onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
         </div>
 
-        {/* PLAYER DE ÁUDIO */}
-        {currentStation && (
-          <div className="player-container hide-on-mobile-sidebar" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 25, width: '280px' }}>
-            <Player station={currentStation} favorites={favorites} toggleFavorite={toggleFavorite} />
+        {/* BAIXO ESQUERDA: Pix QR Code */}
+        <div className={`bottom-left-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
+          <div className="pix-box" style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            background: 'rgba(2, 6, 23, 0.85)', padding: '12px 16px', borderRadius: '12px',
+            border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
+          }}>
+            <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
+                alt="Pix QR Code" 
+                style={{ width: '55px', height: '55px', display: 'block' }} 
+              />
+            </div>
+            <div className="pix-texts" style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+              <span style={{ color: '#fbbf24', fontSize: '9px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
+              <span style={{ color: '#f8fafc', fontSize: '11px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                PIX: <strong style={{ color: '#06b6d4' }}>moacirsistemax@gmail.com</strong>
+              </span>
+              <span style={{ color: '#64748b', fontSize: '9px' }}>© 2026 Moacir Fernandes</span>
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* FOOTER PIX */}
-        <div className="footer-container hide-on-mobile-sidebar" style={{
-          position: 'absolute', bottom: 20, left: 20, zIndex: 20,
-          display: 'flex', alignItems: 'center', gap: '12px',
-          background: 'rgba(2, 6, 23, 0.85)', padding: '10px 14px', borderRadius: '12px',
-          border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
-        }}>
-          <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
-            <img 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
-              alt="Pix QR Code" 
-              style={{ width: '45px', height: '45px', display: 'block' }} 
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-            <span style={{ color: '#fbbf24', fontSize: '9px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
-            <span style={{ color: '#f8fafc', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              PIX: <strong style={{ color: '#06b6d4' }}>moacirsistemax@gmail.com</strong>
-            </span>
-          </div>
+        {/* BAIXO DIREITA: Player de Áudio */}
+        <div className={`bottom-right-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
+          {currentStation && (
+            <div className="player-wrapper" style={{ width: isMobile ? '100%' : '280px' }}>
+              <Player station={currentStation} favorites={favorites} toggleFavorite={toggleFavorite} />
+            </div>
+          )}
         </div>
 
       </div>
