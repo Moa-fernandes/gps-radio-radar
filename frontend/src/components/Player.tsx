@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Howl } from 'howler';
 
-export default function Player({ station }: { station: any }) {
+interface PlayerProps {
+  station: any;
+  favorites: string[];
+  toggleFavorite: (url: string) => void;
+}
+
+export default function Player({ station, favorites, toggleFavorite }: PlayerProps) {
   const soundRef = useRef<Howl | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [localTime, setLocalTime] = useState('');
@@ -41,6 +47,7 @@ export default function Player({ station }: { station: any }) {
   };
 
   if (!station) return null;
+  const isFav = favorites.includes(station.streamUrl);
 
   return (
     <div style={{ 
@@ -57,10 +64,21 @@ export default function Player({ station }: { station: any }) {
         </span>
       </div>
       
-      <h2 style={{ margin: '0 0 2px 0', fontSize: '16px', fontWeight: 600, color: '#f8fafc', letterSpacing: '0.5px' }}>
-        {station.name}
-      </h2>
-      <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#94a3b8' }}>{station.city}, {station.country}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2 style={{ margin: '0 0 2px 0', fontSize: '16px', fontWeight: 600, color: '#f8fafc', letterSpacing: '0.5px' }}>
+            {station.name}
+          </h2>
+          <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#94a3b8' }}>{station.city}, {station.country}</p>
+        </div>
+        <button 
+          onClick={() => toggleFavorite(station.streamUrl)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', outline: 'none', color: isFav ? '#fbbf24' : 'rgba(255,255,255,0.2)' }}
+          title="Marcar como favorita"
+        >
+          {isFav ? '★' : '☆'}
+        </button>
+      </div>
       
       <div style={{ background: 'rgba(2, 6, 23, 0.5)', padding: '10px', borderRadius: '8px', textAlign: 'center', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px', letterSpacing: '0.5px' }}>HORA LOCAL DO TRANSMISSOR</div>

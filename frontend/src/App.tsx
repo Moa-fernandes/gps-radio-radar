@@ -12,6 +12,12 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Estado de favoritos salvo localmente
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem('gps_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const SIDEBAR_WIDTH = 340;
 
   useEffect(() => {
@@ -22,6 +28,19 @@ export default function App() {
       setIsLoading(false);
     });
   }, []);
+
+  // Salva no localStorage sempre que os favoritos mudarem
+  useEffect(() => {
+    localStorage.setItem('gps_favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const toggleFavorite = (streamUrl: string) => {
+    setFavorites(prev => 
+      prev.includes(streamUrl) 
+        ? prev.filter(url => url !== streamUrl) 
+        : [...prev, streamUrl]
+    );
+  };
 
   const handleZoom = (direction: 'in' | 'out') => {
     if (!globeEl.current) return;
@@ -60,22 +79,31 @@ export default function App() {
         pointsData={stations}
         pointLat="lat"
         pointLng="lng"
-        pointColor={() => '#06b6d4'}
+        // Rádios favoritas ficam em destaque (dourado)
+        pointColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
         pointAltitude={0.01}
-        pointRadius={0.12}
+        pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.2 : 0.12}
         pointsMerge={false}
 
         ringsData={stations}
         ringLat="lat"
         ringLng="lng"
-        ringColor={() => '#06b6d4'}
+        ringColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
         ringMaxRadius={1.8}
         ringPropagationSpeed={1.5}
         ringRepeatPeriod={1200}
         
-      onPointClick={(point) => handleSelectStation(point as RadioStation)}      />
+        onPointClick={(point) => handleSelectStation(point as RadioStation)}
+      />
 
-      <Sidebar isOpen={isSidebarOpen} stations={stations} onSelectStation={handleSelectStation} width={SIDEBAR_WIDTH} />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        stations={stations} 
+        onSelectStation={handleSelectStation} 
+        width={SIDEBAR_WIDTH} 
+        favorites={favorites}
+        toggleFavorite={toggleFavorite}
+      />
 
       <div style={{
         position: 'absolute', top: 20, 
@@ -108,9 +136,12 @@ export default function App() {
         <button onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
       </div>
 
-      <Player station={currentStation} />
+      <Player 
+        station={currentStation} 
+        favorites={favorites}
+        toggleFavorite={toggleFavorite}
+      />
 
-      {/* RODAPÉ / COPYRIGHT */}
       <div style={{
         position: 'absolute', bottom: 15, left: 20, zIndex: 20,
         color: '#64748b', fontFamily: 'sans-serif', fontSize: '11px', letterSpacing: '1px',
