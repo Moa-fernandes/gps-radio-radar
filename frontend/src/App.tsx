@@ -5,7 +5,6 @@ import Sidebar from './components/Sidebar';
 import { fetchGlobalStations } from './data/radios';
 import type { RadioStation } from './types';
 
-// Lista limpa e espaçada com os principais países do mundo
 const WORLD_COUNTRIES = [
   { name: 'Brazil', lat: -14.2350, lng: -51.9253 },
   { name: 'United States', lat: 37.0902, lng: -95.7129 },
@@ -32,17 +31,15 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Controle Dinâmico de Tamanho de Tela para Responsividade
-  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
-  
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
   useEffect(() => {
-    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isMobile = windowSize.width <= 768;
-  const SIDEBAR_WIDTH = isMobile ? windowSize.width : 340; // Ocupa a tela toda no celular
+  const SIDEBAR_WIDTH = 340; // No telemóvel a Sidebar ocupará 100vw, gerido no Sidebar.tsx
 
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('gps_favorites');
@@ -76,7 +73,7 @@ export default function App() {
     if (globeEl.current) {
       globeEl.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.4 }, 2000);
     }
-    // UX Profissional: No celular, o diretório fecha sozinho ao escolher a rádio
+    // Fecha a sidebar no telemóvel ao selecionar rádio
     if (isMobile) setIsSidebarOpen(false);
   };
 
@@ -85,44 +82,68 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
       
-      {/* CSS OTIMIZADO PARA TODOS OS DISPOSITIVOS */}
       <style>{`
-        /* Cursor Personalizado */
         .globe-cursor-wrapper { position: absolute; inset: 0; cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:26px'><text y='26'>🦅</text></svg>") 16 16, auto !important; }
         .globe-cursor-wrapper:active { cursor: grabbing !important; }
         .globe-cursor-wrapper canvas { cursor: inherit !important; }
 
-        /* Container de Interface Invisível para Flexbox */
-        .ui-overlay { position: absolute; inset: 0; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; z-index: 50; }
-        .ui-overlay > * { pointer-events: auto; }
-        
-        .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
-        .bottom-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
-
-        /* Reset forçado para o Player.tsx se comportar dentro do flexbox */
-        #player-box > div { position: relative !important; bottom: 0 !important; right: 0 !important; margin: 0 !important; box-sizing: border-box !important; width: 100% !important; }
-        #player-box { width: 300px; }
-
-        /* RESPONSIVIDADE: CELULAR EM PÉ (Portrait) */
-        @media (max-width: 768px) and (orientation: portrait) {
-          .ui-overlay { padding: 15px; }
-          .bottom-row { flex-direction: column-reverse; align-items: center; gap: 15px; }
-          #player-box { width: 100%; max-width: 400px; }
-          .qr-box { width: 100%; max-width: 400px; justify-content: center; }
-          .zoom-btn-group { display: none !important; } /* Oculta +/- porque celular usa pinça */
+        /* Esconder UI no mobile se a sidebar estiver aberta (para não colidir visualmente) */
+        .hide-on-mobile-sidebar {
+          display: flex;
         }
 
-        /* RESPONSIVIDADE: CELULAR DEITADO (Landscape) */
+        @media (max-width: 768px) {
+          .zoom-controls { display: none !important; } /* Oculta +/- no telemóvel */
+          
+          /* Se a sidebar estiver aberta, esconde os controlos inferiores para não sobrepor */
+          .sidebar-open .hide-on-mobile-sidebar {
+            display: none !important;
+          }
+
+          .player-container {
+            bottom: auto !important;
+            top: 70px !important; /* Move o player para o topo no telemóvel */
+            right: 15px !important;
+            left: 15px !important;
+            width: auto !important;
+          }
+          
+          .player-container > div {
+            width: 100% !important;
+            box-sizing: border-box;
+          }
+
+          .footer-container {
+            left: 15px !important;
+            right: 15px !important;
+            bottom: 15px !important;
+            padding: 8px 12px !important;
+            flex-direction: row !important;
+          }
+        }
+        
+        /* Landscape Mobile */
         @media (max-height: 500px) and (orientation: landscape) {
-          .ui-overlay { padding: 10px; }
-          .bottom-row { align-items: flex-end; }
-          #player-box { transform: scale(0.85); transform-origin: bottom right; width: 260px; }
-          .qr-box { transform: scale(0.85); transform-origin: bottom left; }
-          .zoom-btn-group { display: none !important; }
+          .player-container {
+            top: auto !important;
+            bottom: 15px !important;
+            right: 15px !important;
+            left: auto !important;
+            width: 250px !important;
+            transform: scale(0.9);
+            transform-origin: bottom right;
+          }
+          .footer-container {
+            left: 15px !important;
+            bottom: 15px !important;
+            width: 250px !important;
+            padding: 8px !important;
+            transform: scale(0.9);
+            transform-origin: bottom left;
+          }
         }
       `}</style>
 
-      {/* TELA DE LOADING */}
       {isLoading && (
         <div style={{ position: 'absolute', inset: 0, background: '#020617', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', fontFamily: 'sans-serif' }}>
           <h2 style={{ fontSize: '26px', letterSpacing: '3px', marginBottom: '8px', color: '#f8fafc' }}>Welcome RadioMoa</h2>
@@ -130,6 +151,7 @@ export default function App() {
         </div>
       )}
 
+      {/* GLOBO */}
       <div className="globe-cursor-wrapper">
         <Globe
           ref={globeEl}
@@ -167,71 +189,66 @@ export default function App() {
         />
       </div>
 
-      {/* PAINEL LATERAL (Z-Index menor que os botões para não cobrir o clique) */}
-      <div style={{ position: 'absolute', zIndex: 40, top: 0, left: 0 }}>
-        <Sidebar isOpen={isSidebarOpen} stations={stations} onSelectStation={handleSelectStation} width={SIDEBAR_WIDTH} favorites={favorites} toggleFavorite={toggleFavorite} />
-      </div>
-
-      {/* CAMADA DE INTERFACE FLEXÍVEL (Botões, Player, Pix) */}
-      <div className="ui-overlay">
+      {/* Envolvente principal para controlo de classes no telemóvel */}
+      <div className={isSidebarOpen ? "sidebar-open" : ""}>
         
-        {/* TOPO: Botão Menu + Zoom */}
-        <div className="top-row">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', 
-            // Lógica do Botão: Se fechar, fica na esquerda (0). Se abrir no celular, vai pra direita para não sumir!
-            transform: isSidebarOpen ? (isMobile ? `translateX(calc(${windowSize.width}px - 140px))` : `translateX(${SIDEBAR_WIDTH}px)`) : 'translateX(0)',
-            transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-          }}>
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              style={{
-                background: 'rgba(15, 23, 42, 0.7)', color: '#00f6ff', border: '1px solid rgba(6, 182, 212, 0.5)',
-                padding: '10px 16px', fontFamily: 'sans-serif', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-                borderRadius: '8px', backdropFilter: 'blur(10px)', letterSpacing: '1.5px', transition: 'all 0.2s',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.5)', outline: 'none', width: 'max-content'
-              }}
-            >
-              {isSidebarOpen ? (isMobile ? '✖ CLOSE' : '◀ HIDE DIRECTORY') : '☰ SHOW DIRECTORY'}
-            </button>
+        <Sidebar isOpen={isSidebarOpen} stations={stations} onSelectStation={handleSelectStation} width={SIDEBAR_WIDTH} favorites={favorites} toggleFavorite={toggleFavorite} />
 
-            {isSidebarOpen && !isMobile && (
-              <div style={{ color: '#06b6d4', fontFamily: 'sans-serif', pointerEvents: 'none', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '8px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, letterSpacing: '2px', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>GPS SYSTEM</h1>
-                <p style={{ margin: '4px 0 0 0', color: '#e2e8f0', fontSize: '11px', letterSpacing: '1px' }}>NETWORK: <span style={{ color: '#10b981', fontWeight: 'bold' }}>ONLINE</span></p>
-              </div>
-            )}
-          </div>
-
-          <div className="zoom-btn-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button onClick={() => handleZoom('in')} style={zoomBtnStyle}>+</button>
-            <button onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
-          </div>
+        {/* BOTÃO DO MENU (SEMPRE VISÍVEL POR CIMA DE TUDO - Z-INDEX 60) */}
+        <div style={{
+          position: 'absolute', top: 15, 
+          // Se for mobile, fica na esquerda, se desktop, empurra consoante a largura da sidebar
+          left: isMobile ? 15 : (isSidebarOpen ? SIDEBAR_WIDTH + 20 : 20), 
+          transition: 'left 0.3s ease-out', 
+          zIndex: 60, display: 'flex', flexDirection: 'column', gap: '15px'
+        }}>
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            style={{
+              background: 'rgba(15, 23, 42, 0.9)', color: '#00f6ff', border: '1px solid rgba(6, 182, 212, 0.5)',
+              padding: '10px 16px', fontFamily: 'sans-serif', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+              borderRadius: '8px', backdropFilter: 'blur(10px)', letterSpacing: '1.5px', transition: 'all 0.2s',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.5)', outline: 'none', width: 'max-content'
+            }}
+          >
+            {isSidebarOpen ? (isMobile ? '✖ CLOSE DIRECTORY' : '◀ HIDE DIRECTORY') : '☰ SHOW DIRECTORY'}
+          </button>
         </div>
 
-        {/* RODAPÉ: Pix + Player (Desaparecem no celular se o menu estiver aberto para liberar a tela) */}
-        <div className="bottom-row" style={{ display: (isMobile && isSidebarOpen) ? 'none' : 'flex' }}>
-          
-          <div className="qr-box" style={{
-            display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(2, 6, 23, 0.75)', padding: '12px 16px', 
-            borderRadius: '12px', border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)', 
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
-          }}>
-            <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`} alt="Pix QR Code" style={{ width: '55px', height: '55px', display: 'block' }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden' }}>
-              <span style={{ color: '#fbbf24', fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
-              <span style={{ color: '#f8fafc', fontSize: '12px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                PIX: <strong style={{ color: '#06b6d4' }}>moacirsistemax@gmail.com</strong>
-              </span>
-              <span style={{ color: '#64748b', fontSize: '10px' }}>© 2026 Moacir Fernandes</span>
-            </div>
-          </div>
+        {/* ZOOM CONTROLS (Ocultos no Mobile) */}
+        <div className="zoom-controls" style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 10 }}>
+          <button onClick={() => handleZoom('in')} style={zoomBtnStyle}>+</button>
+          <button onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
+        </div>
 
-          <div id="player-box">
+        {/* PLAYER DE ÁUDIO */}
+        {currentStation && (
+          <div className="player-container hide-on-mobile-sidebar" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 25, width: '280px' }}>
             <Player station={currentStation} favorites={favorites} toggleFavorite={toggleFavorite} />
           </div>
+        )}
 
+        {/* FOOTER PIX */}
+        <div className="footer-container hide-on-mobile-sidebar" style={{
+          position: 'absolute', bottom: 20, left: 20, zIndex: 20,
+          display: 'flex', alignItems: 'center', gap: '12px',
+          background: 'rgba(2, 6, 23, 0.85)', padding: '10px 14px', borderRadius: '12px',
+          border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
+        }}>
+          <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
+            <img 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
+              alt="Pix QR Code" 
+              style={{ width: '45px', height: '45px', display: 'block' }} 
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+            <span style={{ color: '#fbbf24', fontSize: '9px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
+            <span style={{ color: '#f8fafc', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              PIX: <strong style={{ color: '#06b6d4' }}>moacirsistemax@gmail.com</strong>
+            </span>
+          </div>
         </div>
 
       </div>

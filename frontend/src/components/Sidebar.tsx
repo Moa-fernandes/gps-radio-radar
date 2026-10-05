@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { RadioStation } from '../types';
 
 interface SidebarProps {
@@ -12,6 +12,13 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, stations, onSelectStation, width, favorites, toggleFavorite }: SidebarProps) {
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const groupedStations = stations.reduce((acc: any, station) => {
     if (!acc[station.country]) acc[station.country] = [];
@@ -19,7 +26,6 @@ export default function Sidebar({ isOpen, stations, onSelectStation, width, favo
     return acc;
   }, {});
 
-  // Favorites group at the top
   const favStations = stations.filter(s => favorites.includes(s.streamUrl));
   if (favStations.length > 0) {
     groupedStations['⭐ Favorites'] = favStations;
@@ -35,18 +41,21 @@ export default function Sidebar({ isOpen, stations, onSelectStation, width, favo
     return a.localeCompare(b);
   });
 
+  // Se for mobile, a largura é 100vw, senão é a largura definida em App.tsx
+  const sidebarWidth = isMobile ? '100vw' : `${width}px`;
+
   return (
     <div style={{
       position: 'absolute', top: 0, left: 0, height: '100vh',
-      width: isOpen ? width : 0,
-      background: 'rgba(2, 6, 23, 0.35)',
+      width: isOpen ? sidebarWidth : '0px',
+      background: 'rgba(2, 6, 23, 0.85)', // Fundo mais escuro para ler melhor no telemóvel
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       borderRight: isOpen ? '1px solid rgba(6, 182, 212, 0.3)' : 'none',
-      transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      transition: 'width 0.3s ease-out',
       overflowX: 'hidden', overflowY: 'auto',
       zIndex: 40, boxSizing: 'border-box', boxShadow: isOpen ? '20px 0 40px rgba(0,0,0,0.5)' : 'none'
     }}>
-      <div style={{ width: width, padding: '24px 20px', boxSizing: 'border-box', opacity: isOpen ? 1 : 0, transition: 'opacity 0.3s ease-in-out' }}>
+      <div style={{ width: sidebarWidth, padding: '24px 20px', boxSizing: 'border-box', opacity: isOpen ? 1 : 0, transition: 'opacity 0.2s ease-in-out', display: isOpen ? 'block' : 'none' }}>
         <h2 style={{ borderBottom: '1px solid rgba(6, 182, 212, 0.4)', paddingBottom: '12px', marginTop: 0, fontSize: '14px', fontWeight: 700, letterSpacing: '2px', color: '#06b6d4', fontFamily: 'sans-serif' }}>
           GLOBAL DIRECTORY
         </h2>
