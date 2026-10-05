@@ -1,3 +1,4 @@
+import tzlookup from 'tz-lookup';
 import type { RadioStation } from '../types';
 
 const FALLBACK_STATIONS: RadioStation[] = [
@@ -25,20 +26,32 @@ export async function fetchGlobalStations(): Promise<RadioStation[]> {
     const apiStations = data
       .filter((station: any) => station.geo_lat && station.geo_long && station.url_resolved)
       .map((station: any) => {
-        // Normaliza a URL: se começar com http, tenta garantir compatibilidade
         let streamUrl = station.url_resolved.trim();
+        
+        let lat = parseFloat(station.geo_lat);
+        let lng = parseFloat(station.geo_long);
+        let timeZone = 'UTC';
+        
+        // Converte a Latitude e Longitude para o Fuso Horário local (ex: Europe/Lisbon)
+        try {
+          if (!isNaN(lat) && !isNaN(lng)) {
+            timeZone = tzlookup(lat, lng);
+          }
+        } catch (e) {
+          timeZone = 'UTC'; // Fallback de segurança caso as coordenadas no oceano falhem
+        }
         
         return {
           name: station.name ? station.name.trim() : 'Rádio Desconhecida',
           country: station.country ? station.country.trim() : 'Global',
           city: station.state ? station.state.trim() : (station.country ? station.country.trim() : 'Mundo'),
-          lat: parseFloat(station.geo_lat),
-          lng: parseFloat(station.geo_long),
+          lat: lat,
+          lng: lng,
           streamUrl: streamUrl,
           genre: station.tags ? station.tags.split(',')[0] : 'Geral',
           bitrate: station.bitrate ? `${station.bitrate} kbps` : '128 kbps',
           listeners: station.votes || Math.floor(Math.random() * 1000) + 100,
-          tz: 'UTC'
+          tz: timeZone // <--- AGORA ESTÁ DINÂMICO!
         };
       });
 
