@@ -12,7 +12,6 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Favorites State (LocalStorage)
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('gps_favorites');
     return saved ? JSON.parse(saved) : [];
@@ -58,7 +57,20 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
       
-      {/* LOADING SCREEN */}
+      <style>{`
+        .globe-cursor-wrapper {
+          position: absolute;
+          inset: 0;
+          cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:26px'><text y='26'>🦅</text></svg>") 16 16, auto !important;
+        }
+        .globe-cursor-wrapper:active {
+          cursor: grabbing !important;
+        }
+        .globe-cursor-wrapper canvas {
+          cursor: inherit !important;
+        }
+      `}</style>
+
       {isLoading && (
         <div style={{
           position: 'absolute', inset: 0, background: '#020617', zIndex: 100,
@@ -70,30 +82,32 @@ export default function App() {
         </div>
       )}
 
-      <Globe
-        ref={globeEl}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-        bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-        backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-        
-        pointsData={stations}
-        pointLat="lat"
-        pointLng="lng"
-        pointColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
-        pointAltitude={0.01}
-        pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.2 : 0.12}
-        pointsMerge={false}
+      <div className="globe-cursor-wrapper">
+        <Globe
+          ref={globeEl}
+          globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+          bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+          
+          pointsData={stations}
+          pointLat="lat"
+          pointLng="lng"
+          pointColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
+          pointAltitude={0.01}
+          pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.2 : 0.12}
+          pointsMerge={false}
 
-        ringsData={stations}
-        ringLat="lat"
-        ringLng="lng"
-        ringColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
-        ringMaxRadius={1.8}
-        ringPropagationSpeed={1.5}
-        ringRepeatPeriod={1200}
-        
-        onPointClick={(point) => handleSelectStation(point as RadioStation)}
-      />
+          ringsData={stations}
+          ringLat="lat"
+          ringLng="lng"
+          ringColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
+          ringMaxRadius={1.8}
+          ringPropagationSpeed={1.5}
+          ringRepeatPeriod={1200}
+          
+          onPointClick={(point) => handleSelectStation(point as RadioStation)}
+        />
+      </div>
 
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -104,7 +118,6 @@ export default function App() {
         toggleFavorite={toggleFavorite}
       />
 
-      {/* HEADER / FLOATING MENU */}
       <div style={{
         position: 'absolute', top: 20, 
         left: isSidebarOpen ? SIDEBAR_WIDTH + 20 : 20, 
@@ -142,7 +155,7 @@ export default function App() {
         toggleFavorite={toggleFavorite}
       />
 
-      {/* FOOTER: PIX & QR CODE */}
+      {/* FOOTER: PIX & QR CODE CORRIGIDO */}
       <div style={{
         position: 'absolute', bottom: 20, left: 20, zIndex: 20,
         display: 'flex', alignItems: 'center', gap: '15px',
@@ -150,11 +163,15 @@ export default function App() {
         border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
       }}>
-        <img 
-          src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=moacirsistemax@gmail.com&color=06b6d4&bgcolor=020617" 
-          alt="Pix QR Code" 
-          style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.5)' }} 
-        />
+        {/* QR Code com fundo branco e desenho preto para garantir leitura universal */}
+        <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)' }}>
+          <img 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=moacirsistemax@gmail.com&color=000000&bgcolor=ffffff" 
+            alt="Pix QR Code" 
+            style={{ width: '60px', height: '60px', display: 'block' }} 
+          />
+        </div>
+        
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ color: '#fbbf24', fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT THIS PROJECT</span>
           <span style={{ color: '#f8fafc', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
