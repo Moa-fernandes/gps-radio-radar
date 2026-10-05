@@ -9,10 +9,7 @@ export default function App() {
   const globeEl = useRef<any>(null);
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [currentStation, setCurrentStation] = useState<RadioStation | null>(null);
-  
-  // ALINHAMENTO: Iniciar com o Sidebar FECHADO (false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
   const [isLoading, setIsLoading] = useState(true);
   
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -57,7 +54,6 @@ export default function App() {
     }
   };
 
-  // CÓDIGO PIX OFICIAL (BR CODE) CALCULADO PARA O SEU E-MAIL
   const pixPayloadEncoded = "00020126460014BR.GOV.BCB.PIX0124moacirsistemax%40gmail.com5204000053039865802BR5916Moacir%20Fernandes6014Rio%20de%20Janeiro62070503%2A%2A%2A63044DAB";
 
   return (
@@ -95,6 +91,7 @@ export default function App() {
           bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
           backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
           
+          /* PONTOS (Bolinhas) */
           pointsData={stations}
           pointLat="lat"
           pointLng="lng"
@@ -103,6 +100,7 @@ export default function App() {
           pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.2 : 0.12}
           pointsMerge={false}
 
+          /* ANÉIS PULSANTES */
           ringsData={stations}
           ringLat="lat"
           ringLng="lng"
@@ -111,7 +109,19 @@ export default function App() {
           ringPropagationSpeed={1.5}
           ringRepeatPeriod={1200}
           
+          /* TEXTOS / NOMES DAS CIDADES */
+          labelsData={stations}
+          labelLat="lat"
+          labelLng="lng"
+          labelText={(d: any) => d.city}
+          labelSize={(d: any) => favorites.includes(d.streamUrl) ? 0.6 : 0.4}
+          labelDotRadius={0} // 0 para não desenhar outro ponto, usamos o pointsData para isso
+          labelColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : 'rgba(148, 163, 184, 0.9)'}
+          labelAltitude={0.02}
+          labelResolution={2}
+
           onPointClick={(point) => handleSelectStation(point as RadioStation)}
+          onLabelClick={(label) => handleSelectStation(label as RadioStation)}
         />
       </div>
 
@@ -142,7 +152,6 @@ export default function App() {
           {isSidebarOpen ? '◀ HIDE DIRECTORY' : '☰ SHOW DIRECTORY'}
         </button>
 
-        {/* Informações do GPS Sistema aparecem apenas se o diretório estiver aberto (opcional, ou deixe fixo) */}
         {isSidebarOpen && (
           <div style={{ color: '#06b6d4', fontFamily: 'sans-serif', pointerEvents: 'none', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '8px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, letterSpacing: '2px', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>GPS SYSTEM</h1>
@@ -174,7 +183,7 @@ export default function App() {
         <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)' }}>
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
-            alt="Pix QR Code Oficial" 
+            alt="Pix QR Code" 
             style={{ width: '60px', height: '60px', display: 'block' }} 
           />
         </div>
