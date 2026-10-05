@@ -73,8 +73,7 @@ export default function App() {
         ringPropagationSpeed={1.5}
         ringRepeatPeriod={1200}
         
-        onPointClick={handleSelectStation}
-      />
+      onPointClick={(point) => handleSelectStation(point as RadioStation)}      />
 
       <Sidebar isOpen={isSidebarOpen} stations={stations} onSelectStation={handleSelectStation} width={SIDEBAR_WIDTH} />
 
