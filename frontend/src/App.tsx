@@ -209,17 +209,18 @@ export default function App() {
           </div>
         </div>
 
-        {/* BAIXO DIREITA: FOOTER DE E-BOOKS */}
+        {/* BAIXO DIREITA: FOOTER DE E-BOOKS (CENTRALIZADO) */}
         <div className={`bottom-right-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
           <div className={`interactive-ui right ${isInteracting ? 'dimmed' : ''}`}>
             <div className="ebooks-container" style={{ 
-              display: 'flex', flexDirection: 'column', gap: '8px',
+              display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center',
               background: 'rgba(2, 6, 23, 0.85)', padding: '16px 20px', borderRadius: '12px',
               border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-              width: 'max-content', maxWidth: '100%'
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)', maxWidth: '100%'
             }}>
-              <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textAlign: 'right', marginBottom: '2px' }}>MATERIAL DE APOIO - TI & NEGÓCIOS</span>
+              <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textAlign: 'center', marginBottom: '2px' }}>
+                MATERIAL DE APOIO - TECNOLOGIA & INOVAÇÃO
+              </span>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', columnGap: '20px', rowGap: '8px' }}>
                 <a className="ebook-link" href="https://go.hotmart.com/L108214592F" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Eng. de Software e Banco de Dados</a>
                 <a className="ebook-link" href="https://go.hotmart.com/V108213402L" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Fundamentos e Indústria 4.0</a>
