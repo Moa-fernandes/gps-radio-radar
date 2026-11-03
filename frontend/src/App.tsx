@@ -4,6 +4,7 @@ import Player from './components/Player';
 import Sidebar from './components/Sidebar';
 import { fetchGlobalStations } from './data/radios';
 import type { RadioStation } from './types';
+import './App.css';
 
 const WORLD_COUNTRIES = [
   { name: 'Brazil', lat: -14.2350, lng: -51.9253 },
@@ -31,7 +32,9 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Deteta se é dispositivo móvel para lógicas de JavaScript (como o Sidebar fechar ao clicar)
+  const [isInteracting, setIsInteracting] = useState(false);
+  const interactTimeout = useRef<any>(null);
+  
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -62,7 +65,16 @@ export default function App() {
     setFavorites(prev => prev.includes(streamUrl) ? prev.filter(url => url !== streamUrl) : [...prev, streamUrl]);
   };
 
+  const triggerInteraction = () => {
+    setIsInteracting(true);
+    if (interactTimeout.current) clearTimeout(interactTimeout.current);
+    interactTimeout.current = setTimeout(() => {
+      setIsInteracting(false);
+    }, 600); 
+  };
+
   const handleZoom = (direction: 'in' | 'out') => {
+    triggerInteraction();
     if (!globeEl.current) return;
     const currentPov = globeEl.current.pointOfView();
     const newAltitude = direction === 'in' ? Math.max(0.1, currentPov.altitude - 0.5) : Math.min(4, currentPov.altitude + 0.5);
@@ -72,7 +84,7 @@ export default function App() {
   const handleSelectStation = (station: RadioStation) => {
     setCurrentStation(station);
     if (globeEl.current) {
-      globeEl.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.4 }, 2000);
+      globeEl.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.8 }, 2000);
     }
     if (isMobile) setIsSidebarOpen(false);
   };
@@ -81,108 +93,7 @@ export default function App() {
 
   return (
     <div style={{ width: '100vw', height: '100dvh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
-      
-      {/* 
-        A MÁGICA DA RESPONSIVIDADE ACONTECE AQUI:
-        Uso de Media Queries precisas e '100dvh' para ignorar as barras do navegador no mobile.
-      */}
-      <style>{`
-        /* Cursor Personalizado (só aparece em ecrãs com rato) */
-        @media (hover: hover) and (pointer: fine) {
-          .globe-cursor-wrapper { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:26px'><text y='26'>🦅</text></svg>") 16 16, auto !important; }
-          .globe-cursor-wrapper:active { cursor: grabbing !important; }
-          .globe-cursor-wrapper canvas { cursor: inherit !important; }
-        }
 
-        .globe-cursor-wrapper { position: absolute; inset: 0; }
-
-        /* --- CLASSES BASE (DESKTOP) --- */
-        .ui-container {
-          position: absolute; inset: 0; padding: 20px;
-          pointer-events: none; /* Deixa o clique passar para o globo */
-          display: grid;
-          grid-template-areas: 
-            "top-left top-right"
-            "mid-left mid-right"
-            "bottom-left bottom-right";
-          grid-template-rows: auto 1fr auto;
-          grid-template-columns: 1fr auto;
-          z-index: 30;
-        }
-        
-        .ui-container > * { pointer-events: auto; } /* Ativa os cliques nos botões/UI */
-
-        .top-left-area { grid-area: top-left; display: flex; flex-direction: column; gap: 10px; transition: transform 0.3s ease; }
-        .mid-right-area { grid-area: mid-right; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
-        .bottom-left-area { grid-area: bottom-left; align-self: flex-end; }
-        .bottom-right-area { grid-area: bottom-right; align-self: flex-end; }
-
-        /* Ajuste do botão do Menu quando a sidebar abre no Desktop */
-        @media (min-width: 769px) {
-          .menu-shifted { transform: translateX(360px); }
-        }
-
-        /* --- RESPONSIVIDADE MOBILE (PORTRAIT / EM PÉ) --- */
-        @media (max-width: 768px) and (orientation: portrait) {
-          .ui-container {
-            padding: 15px 15px max(15px, env(safe-area-inset-bottom)); /* Previne corte pela barra do Android/iOS */
-            grid-template-areas: 
-              "top-left mid-right"
-              "player player"
-              "bottom-left bottom-left";
-            grid-template-rows: auto 1fr auto;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-          }
-
-          /* O botão do menu fica sempre fixo em cima à esquerda, mesmo com sidebar aberta */
-          .top-left-area { transform: none !important; z-index: 60; }
-          
-          /* Os botões de zoom sobem para o topo à direita */
-          .mid-right-area { justify-content: flex-start; }
-          .zoom-btn { width: 38px !important; height: 38px !important; fontSize: 20px !important; }
-
-          /* O Player de áudio move-se para o meio, logo acima do Pix */
-          .bottom-right-area { grid-area: player; width: 100%; align-self: end; margin-bottom: 10px; }
-          .player-wrapper > div { width: 100% !important; box-sizing: border-box; } /* Força o player a ocupar a largura total */
-
-          /* O QR Code (Pix) ocupa a largura total na base */
-          .bottom-left-area { width: 100%; }
-          .pix-box { width: 100%; box-sizing: border-box; padding: 10px !important; }
-          .pix-box img { width: 45px !important; height: 45px !important; }
-
-          /* Se a Sidebar estiver aberta no mobile, esconde o Player e o Pix para não poluir o ecrã */
-          .hide-when-sidebar-open { display: none !important; }
-        }
-
-        /* --- RESPONSIVIDADE MOBILE (LANDSCAPE / DEITADO) --- */
-        @media (max-height: 500px) and (max-width: 950px) and (orientation: landscape) {
-          .ui-container {
-            padding: 10px 15px max(10px, env(safe-area-inset-bottom));
-            grid-template-areas: 
-              "top-left mid-right"
-              "bottom-left bottom-right";
-            grid-template-rows: 1fr auto;
-            grid-template-columns: 1fr auto;
-          }
-          
-          .top-left-area { transform: none !important; z-index: 60; }
-          
-          /* Reduz o tamanho do Pix para caber melhor */
-          .bottom-left-area { align-self: end; }
-          .pix-box { padding: 8px 12px !important; }
-          .pix-box img { width: 35px !important; height: 35px !important; }
-          .pix-texts { transform: scale(0.85); transform-origin: left center; }
-
-          /* Reduz e posiciona o player no canto inferior direito */
-          .bottom-right-area { align-self: end; }
-          .player-wrapper { transform: scale(0.8); transform-origin: bottom right; width: 300px; margin-right: -20px; margin-bottom: -10px; }
-
-          .hide-when-sidebar-open { display: none !important; }
-        }
-      `}</style>
-
-      {/* TELA DE LOADING */}
       {isLoading && (
         <div style={{ position: 'absolute', inset: 0, background: '#020617', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', fontFamily: 'sans-serif' }}>
           <h2 style={{ fontSize: '26px', letterSpacing: '3px', marginBottom: '8px', color: '#f8fafc' }}>Welcome RadioMoa</h2>
@@ -190,8 +101,14 @@ export default function App() {
         </div>
       )}
 
-      {/* GLOBO */}
-      <div className="globe-cursor-wrapper">
+      {/* ÁREA DO GLOBO */}
+      <div 
+        className="globe-cursor-wrapper"
+        onPointerDown={() => setIsInteracting(true)}
+        onPointerUp={() => triggerInteraction()}
+        onPointerLeave={() => setIsInteracting(false)}
+        onWheel={() => triggerInteraction()}
+      >
         <Globe
           ref={globeEl}
           globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
@@ -212,15 +129,15 @@ export default function App() {
           pointLat="lat"
           pointLng="lng"
           pointColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
-          pointAltitude={0.01}
-          pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.2 : 0.12}
+          pointAltitude={0.02}
+          pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.6 : 0.45}
           pointsMerge={false}
 
           ringsData={stations}
           ringLat="lat"
           ringLng="lng"
           ringColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
-          ringMaxRadius={1.8}
+          ringMaxRadius={2.5}
           ringPropagationSpeed={1.5}
           ringRepeatPeriod={1200}
           
@@ -228,15 +145,13 @@ export default function App() {
         />
       </div>
 
-      {/* SIDEBAR (Por baixo da UI Container, mas recebe cliques) */}
       <div style={{ position: 'absolute', zIndex: 20, top: 0, left: 0 }}>
         <Sidebar isOpen={isSidebarOpen} stations={stations} onSelectStation={handleSelectStation} width={SIDEBAR_WIDTH} favorites={favorites} toggleFavorite={toggleFavorite} />
       </div>
 
-      {/* UI CONTAINER (Grelha Responsiva) */}
       <div className="ui-container">
         
-        {/* TOPO ESQUERDA: Botão Menu */}
+        {/* TOPO ESQUERDA: MENU */}
         <div className={`top-left-area ${isSidebarOpen && !isMobile ? 'menu-shifted' : ''}`}>
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -251,44 +166,70 @@ export default function App() {
           </button>
         </div>
 
-        {/* MEIO DIREITA: Zoom Controls (Restaurados para mobile) */}
+        {/* TOPO DIREITA: PLAYER COMPACTO */}
+        <div className={`top-right-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
+          {currentStation && (
+            <div className="player-wrapper" style={{ width: isMobile ? '100%' : '160px' }}>
+              <Player station={currentStation} favorites={favorites} toggleFavorite={toggleFavorite} />
+            </div>
+          )}
+        </div>
+
+        {/* MEIO DIREITA: BOTOES DE ZOOM */}
         <div className="mid-right-area">
           <button className="zoom-btn" onClick={() => handleZoom('in')} style={zoomBtnStyle}>+</button>
           <button className="zoom-btn" onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
         </div>
 
-        {/* BAIXO ESQUERDA: Pix QR Code */}
+        {/* BAIXO ESQUERDA: FOOTER DO PIX */}
         <div className={`bottom-left-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
-          <div className="pix-box" style={{
-            display: 'flex', alignItems: 'center', gap: '12px',
-            background: 'rgba(2, 6, 23, 0.85)', padding: '12px 16px', borderRadius: '12px',
-            border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif'
-          }}>
-            <div style={{ background: '#ffffff', padding: '4px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
-                alt="Pix QR Code" 
-                style={{ width: '55px', height: '55px', display: 'block' }} 
-              />
-            </div>
-            <div className="pix-texts" style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
-              <span style={{ color: '#fbbf24', fontSize: '9px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
-              <span style={{ color: '#f8fafc', fontSize: '11px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                PIX: <strong style={{ color: '#06b6d4' }}>moacirsistemax@gmail.com</strong>
-              </span>
-              <span style={{ color: '#64748b', fontSize: '9px' }}>© 2026 Moacir Fernandes</span>
+          <div className={`interactive-ui left ${isInteracting ? 'dimmed' : ''}`}>
+            <div className="pix-box" style={{
+              display: 'flex', alignItems: 'center', gap: '20px',
+              background: 'rgba(2, 6, 23, 0.85)', padding: '16px 20px', borderRadius: '12px',
+              border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif',
+              width: 'max-content', maxWidth: '100%'
+            }}>
+              <div style={{ background: '#ffffff', padding: '6px', borderRadius: '8px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
+                  alt="Pix QR Code" 
+                  style={{ width: '85px', height: '85px', display: 'block' }} 
+                />
+              </div>
+              <div className="pix-texts" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
+                <span style={{ color: '#f8fafc', fontSize: '12px' }}>
+                  PIX: <strong style={{ color: '#06b6d4', display: 'block', marginTop: '2px' }}>moacirsistemax@gmail.com</strong>
+                </span>
+                <span style={{ color: '#64748b', fontSize: '10px' }}>© 2026 Moacir Fernandes</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* BAIXO DIREITA: Player de Áudio */}
+        {/* BAIXO DIREITA: FOOTER DE E-BOOKS */}
         <div className={`bottom-right-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
-          {currentStation && (
-            <div className="player-wrapper" style={{ width: isMobile ? '100%' : '280px' }}>
-              <Player station={currentStation} favorites={favorites} toggleFavorite={toggleFavorite} />
+          <div className={`interactive-ui right ${isInteracting ? 'dimmed' : ''}`}>
+            <div className="ebooks-container" style={{ 
+              display: 'flex', flexDirection: 'column', gap: '8px',
+              background: 'rgba(2, 6, 23, 0.85)', padding: '16px 20px', borderRadius: '12px',
+              border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              width: 'max-content', maxWidth: '100%'
+            }}>
+              <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textAlign: 'right', marginBottom: '2px' }}>MATERIAL DE APOIO - TI & NEGÓCIOS</span>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', columnGap: '20px', rowGap: '8px' }}>
+                <a className="ebook-link" href="https://go.hotmart.com/L108214592F" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Eng. de Software e Banco de Dados</a>
+                <a className="ebook-link" href="https://go.hotmart.com/V108213402L" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Fundamentos e Indústria 4.0</a>
+                <a className="ebook-link" href="https://go.hotmart.com/N108214728C" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Gestão de Projetos e Startups</a>
+                <a className="ebook-link" href="https://go.hotmart.com/F108230377L" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Guia Prático de Deploy & Ágil</a>
+                <a className="ebook-link" href="https://go.hotmart.com/L108230120I" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• IA Vertical com ChatGPT</a>
+                <a className="ebook-link" href="https://go.hotmart.com/X108214950O" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Trilha: Desenv. Sistemas (Combo)</a>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
       </div>

@@ -1,0 +1,162 @@
+/* --- CURSOR NATIVO (MÃO DE AGARRAR) --- */
+.globe-cursor-wrapper {
+  position: absolute;
+  inset: 0;
+  cursor: grab !important;
+}
+
+.globe-cursor-wrapper:active {
+  cursor: grabbing !important;
+}
+
+.globe-cursor-wrapper canvas {
+  cursor: inherit !important;
+}
+
+/* --- TRANSIÇÕES E EFEITOS (INTERAÇÃO NO GLOBO) --- */
+.interactive-ui {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.interactive-ui.left { transform-origin: bottom left; }
+.interactive-ui.right { transform-origin: bottom right; }
+
+.interactive-ui.dimmed {
+  opacity: 0.15;
+  transform: scale(0.75);
+  pointer-events: none;
+}
+
+.interactive-ui:hover {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  pointer-events: auto !important;
+}
+
+.ebook-link:hover {
+  text-decoration: underline !important;
+  color: #fff !important;
+}
+
+/* --- LAYOUT GRID DESKTOP (PADRÃO) --- */
+.ui-container {
+  position: absolute;
+  inset: 0;
+  padding: 20px;
+  pointer-events: none;
+  display: grid;
+  grid-template-areas: 
+    "top-left top-right"
+    "mid-left mid-right"
+    "bottom-left bottom-right";
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 1fr;
+  z-index: 30;
+}
+
+.ui-container > * { 
+  pointer-events: auto; 
+}
+
+.top-left-area { 
+  grid-area: top-left; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+  transition: transform 0.3s ease; 
+  justify-self: flex-start; 
+}
+
+.top-right-area {
+  grid-area: top-right;
+  justify-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.mid-right-area { 
+  grid-area: mid-right; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+  justify-content: center; 
+  justify-self: flex-end; 
+}
+
+.bottom-left-area { 
+  grid-area: bottom-left; 
+  align-self: flex-end; 
+  justify-self: flex-start; 
+}
+
+.bottom-right-area { 
+  grid-area: bottom-right; 
+  align-self: flex-end; 
+  justify-self: flex-end; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  align-items: flex-end; 
+}
+
+@media (min-width: 769px) {
+  .menu-shifted { transform: translateX(360px); }
+}
+
+/* --- RESPONSIVIDADE: MOBILE PORTRAIT (Em pé) --- */
+@media (max-width: 768px) and (orientation: portrait) {
+  .ui-container {
+    padding: 15px 15px max(15px, env(safe-area-inset-bottom));
+    grid-template-areas: 
+      "top-left mid-right"
+      "top-right top-right"
+      "bottom-right bottom-right"
+      "bottom-left bottom-left";
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+
+  .top-left-area { transform: none !important; z-index: 60; }
+  .mid-right-area { justify-content: flex-start; }
+  
+  .top-right-area { width: 100%; justify-self: center; align-items: stretch; margin-top: 10px; }
+  
+  .zoom-btn { width: 38px !important; height: 38px !important; font-size: 20px !important; }
+
+  .bottom-right-area { width: 100%; align-items: stretch !important; justify-self: center; gap: 10px; }
+  .bottom-left-area { width: 100%; justify-self: center; }
+
+  .pix-box { width: 100%; box-sizing: border-box; padding: 12px !important; justify-content: flex-start !important; gap: 12px !important; }
+  .pix-box img { width: 65px !important; height: 65px !important; }
+  
+  .ebooks-container { width: 100%; box-sizing: border-box; padding: 12px 16px !important; margin-bottom: 5px; }
+
+  .hide-when-sidebar-open { display: none !important; }
+}
+
+/* --- RESPONSIVIDADE: MOBILE LANDSCAPE (Deitado) --- */
+@media (max-height: 500px) and (max-width: 950px) and (orientation: landscape) {
+  .ui-container {
+    padding: 10px 15px max(10px, env(safe-area-inset-bottom));
+    grid-template-areas: 
+      "top-left top-right"
+      "bottom-left bottom-right";
+    grid-template-rows: 1fr auto;
+    grid-template-columns: 1fr auto;
+  }
+  
+  .top-left-area { transform: none !important; z-index: 60; }
+  
+  .bottom-left-area { align-self: flex-end; max-width: 50%; }
+  .pix-box { padding: 8px 12px !important; gap: 8px !important; }
+  .pix-box img { width: 45px !important; height: 45px !important; }
+  .pix-texts { transform: scale(0.85); transform-origin: left center; }
+  
+  .ebooks-container { display: none !important; }
+
+  .top-right-area { align-self: flex-start; justify-self: flex-end; }
+  .player-wrapper { transform: scale(0.8); transform-origin: top right; width: 300px; margin-right: -20px; margin-top: -10px; }
+
+  .hide-when-sidebar-open { display: none !important; }
+}
