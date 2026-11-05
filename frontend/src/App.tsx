@@ -3,6 +3,7 @@ import Globe from 'react-globe.gl';
 import Player from './components/Player';
 import Sidebar from './components/Sidebar';
 import { fetchGlobalStations } from './data/radios';
+import { useI18n } from './i18n';
 import type { RadioStation } from './types';
 import './App.css';
 
@@ -22,224 +23,327 @@ const WORLD_COUNTRIES = [
   { name: 'Australia', lat: -25.2744, lng: 133.7751 },
   { name: 'South Africa', lat: -30.5595, lng: 22.9375 },
   { name: 'India', lat: 20.5937, lng: 78.9629 },
-  { name: 'Mexico', lat: 23.6345, lng: -102.5528 }
+  { name: 'Mexico', lat: 23.6345, lng: -102.5528 },
 ];
+
+const EBOOKS = [
+  { title: 'Eng. de Software e Banco de Dados', url: 'https://go.hotmart.com/L108214592F' },
+  { title: 'Fundamentos e Indústria 4.0', url: 'https://go.hotmart.com/V108213402L' },
+  { title: 'Gestão de Projetos e Startups', url: 'https://go.hotmart.com/N108214728C' },
+  { title: 'Guia Prático de Deploy & Ágil', url: 'https://go.hotmart.com/F108230377L' },
+  { title: 'IA Vertical com ChatGPT', url: 'https://go.hotmart.com/L108230120I' },
+  { title: 'Trilha: Desenv. Sistemas (Combo)', url: 'https://go.hotmart.com/X108214950O' },
+];
+
+const PIX_KEY = 'moacirsistemax@gmail.com';
+const PIX_PAYLOAD =
+  '00020126460014BR.GOV.BCB.PIX0124moacirsistemax%40gmail.com5204000053039865802BR5916Moacir%20Fernandes6014Rio%20de%20Janeiro62070503%2A%2A%2A63044DAB';
+const PIX_QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${PIX_PAYLOAD}&color=000000&bgcolor=ffffff`;
+
+const MOBILE_MAX = 768;
+
+type PanelId = 'ebooks' | 'pix' | null;
+
+function useViewport() {
+  const [size, setSize] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+
+  useEffect(() => {
+    const update = () => setSize({ width: window.innerWidth, height: window.innerHeight });
+    const onOrientation = () => setTimeout(update, 300);
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', onOrientation);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', onOrientation);
+    };
+  }, []);
+
+  return size;
+}
 
 export default function App() {
   const globeEl = useRef<any>(null);
+  const dragTimer = useRef<number | null>(null);
+  const { lang, setLang, t } = useI18n();
+
   const [stations, setStations] = useState<RadioStation[]>([]);
-  const [currentStation, setCurrentStation] = useState<RadioStation | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const [isInteracting, setIsInteracting] = useState(false);
-  const interactTimeout = useRef<any>(null);
-  
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const SIDEBAR_WIDTH = 340; 
+  const [currentStation, setCurrentStation] = useState<RadioStation | null>(null);
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState<PanelId>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const [favorites, setFavorites] = useState<string[]>(() => {
-    const saved = localStorage.getItem('gps_favorites');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('gps_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
+  const { width, height } = useViewport();
+  const isMobile = width <= MOBILE_MAX;
+
   useEffect(() => {
-    fetchGlobalStations().then((data) => {
-      setStations(data);
-      setIsLoading(false);
-    }).catch(() => setIsLoading(false));
+    fetchGlobalStations()
+      .then((data) => setStations(data))
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
   useEffect(() => {
     localStorage.setItem('gps_favorites', JSON.stringify(favorites));
   }, [favorites]);
 
+  useEffect(() => {
+    return () => {
+      if (dragTimer.current) window.clearTimeout(dragTimer.current);
+    };
+  }, []);
+
   const toggleFavorite = (streamUrl: string) => {
-    setFavorites(prev => prev.includes(streamUrl) ? prev.filter(url => url !== streamUrl) : [...prev, streamUrl]);
+    setFavorites((prev) =>
+      prev.includes(streamUrl) ? prev.filter((u) => u !== streamUrl) : [...prev, streamUrl]
+    );
   };
 
-  const triggerInteraction = () => {
-    setIsInteracting(true);
-    if (interactTimeout.current) clearTimeout(interactTimeout.current);
-    interactTimeout.current = setTimeout(() => {
-      setIsInteracting(false);
-    }, 600); 
+  const beginDrag = () => {
+    if (dragTimer.current) window.clearTimeout(dragTimer.current);
+    setIsDragging(true);
+    setOpenPanel(null);
+  };
+
+  const endDrag = () => {
+    if (dragTimer.current) window.clearTimeout(dragTimer.current);
+    dragTimer.current = window.setTimeout(() => setIsDragging(false), 450);
   };
 
   const handleZoom = (direction: 'in' | 'out') => {
-    triggerInteraction();
-    if (!globeEl.current) return;
-    const currentPov = globeEl.current.pointOfView();
-    const newAltitude = direction === 'in' ? Math.max(0.1, currentPov.altitude - 0.5) : Math.min(4, currentPov.altitude + 0.5);
-    globeEl.current.pointOfView({ ...currentPov, altitude: newAltitude }, 500);
+    const globe = globeEl.current;
+    if (!globe) return;
+    const pov = globe.pointOfView();
+    const altitude =
+      direction === 'in' ? Math.max(0.1, pov.altitude - 0.5) : Math.min(4, pov.altitude + 0.5);
+    globe.pointOfView({ ...pov, altitude }, 500);
   };
 
   const handleSelectStation = (station: RadioStation) => {
     setCurrentStation(station);
-    if (globeEl.current) {
-      globeEl.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.8 }, 2000);
-    }
+    setShowPlayer(true);
+    setOpenPanel(null);
     if (isMobile) setIsSidebarOpen(false);
+    globeEl.current?.pointOfView(
+      { lat: station.lat, lng: station.lng, altitude: isMobile ? 1.1 : 0.8 },
+      1800
+    );
   };
 
-  const pixPayloadEncoded = "00020126460014BR.GOV.BCB.PIX0124moacirsistemax%40gmail.com5204000053039865802BR5916Moacir%20Fernandes6014Rio%20de%20Janeiro62070503%2A%2A%2A63044DAB";
+  const togglePanel = (id: Exclude<PanelId, null>) => {
+    setOpenPanel((prev) => (prev === id ? null : id));
+  };
+
+  const copyPix = async () => {
+    try {
+      await navigator.clipboard.writeText(PIX_KEY);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard indisponível */
+    }
+  };
 
   return (
-    <div style={{ width: '100vw', height: '100dvh', backgroundColor: '#020617', overflow: 'hidden', position: 'relative' }}>
-
+    <div className={`app${isDragging ? ' is-dragging' : ''}`}>
       {isLoading && (
-        <div style={{ position: 'absolute', inset: 0, background: '#020617', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', fontFamily: 'sans-serif' }}>
-          <h2 style={{ fontSize: '26px', letterSpacing: '3px', marginBottom: '8px', color: '#f8fafc' }}>Welcome RadioMoa</h2>
-          <p style={{ color: '#06b6d4', fontSize: '14px', letterSpacing: '2px', fontWeight: 600 }}>Loading... GPS</p>
+        <div className="loader">
+          <div className="loader-ring" />
+          <h1>Welcome RadioMoa</h1>
+          <p>{t('loading')}</p>
         </div>
       )}
 
-      {/* ÁREA DO GLOBO */}
-      <div 
-        className="globe-cursor-wrapper"
-        onPointerDown={() => setIsInteracting(true)}
-        onPointerUp={() => triggerInteraction()}
-        onPointerLeave={() => setIsInteracting(false)}
-        onWheel={() => triggerInteraction()}
+      {/* GLOBO */}
+      <div
+        className="globe-layer"
+        onPointerDown={beginDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onPointerLeave={endDrag}
+        onWheel={() => {
+          beginDrag();
+          endDrag();
+        }}
       >
         <Globe
           ref={globeEl}
+          width={width}
+          height={height}
           globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
           bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
           backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-          
           labelsData={WORLD_COUNTRIES}
           labelLat="lat"
           labelLng="lng"
           labelText="name"
-          labelSize={0.6}
+          labelSize={isMobile ? 0.45 : 0.6}
           labelDotRadius={0}
           labelColor={() => 'rgba(241, 245, 249, 0.85)'}
           labelAltitude={0.01}
           labelResolution={2}
-
           pointsData={stations}
           pointLat="lat"
           pointLng="lng"
-          pointColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
+          pointColor={(d: any) => (favorites.includes(d.streamUrl) ? '#fbbf24' : '#22d3ee')}
           pointAltitude={0.02}
-          pointRadius={(d: any) => favorites.includes(d.streamUrl) ? 0.6 : 0.45}
+          pointRadius={(d: any) => (favorites.includes(d.streamUrl) ? 0.6 : 0.45)}
           pointsMerge={false}
-
           ringsData={stations}
           ringLat="lat"
           ringLng="lng"
-          ringColor={(d: any) => favorites.includes(d.streamUrl) ? '#fbbf24' : '#06b6d4'}
+          ringColor={(d: any) => (favorites.includes(d.streamUrl) ? '#fbbf24' : '#22d3ee')}
           ringMaxRadius={2.5}
           ringPropagationSpeed={1.5}
           ringRepeatPeriod={1200}
-          
           onPointClick={(point) => handleSelectStation(point as RadioStation)}
         />
       </div>
 
-      <div style={{ position: 'absolute', zIndex: 20, top: 0, left: 0 }}>
-        <Sidebar isOpen={isSidebarOpen} stations={stations} onSelectStation={handleSelectStation} width={SIDEBAR_WIDTH} favorites={favorites} toggleFavorite={toggleFavorite} />
-      </div>
+      {/* DIRETÓRIO */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        stations={stations}
+        favorites={favorites}
+        toggleFavorite={toggleFavorite}
+        onSelectStation={handleSelectStation}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
-      <div className="ui-container">
-        
-        {/* TOPO ESQUERDA: MENU */}
-        <div className={`top-left-area ${isSidebarOpen && !isMobile ? 'menu-shifted' : ''}`}>
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            style={{
-              background: 'rgba(15, 23, 42, 0.9)', color: '#00f6ff', border: '1px solid rgba(6, 182, 212, 0.5)',
-              padding: '10px 16px', fontFamily: 'sans-serif', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-              borderRadius: '8px', backdropFilter: 'blur(10px)', letterSpacing: '1.5px', transition: 'all 0.2s',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.5)', outline: 'none', width: 'max-content'
-            }}
+      {/* TOPO: DIRETÓRIO + IDIOMA + MARCA */}
+      <header className={`topbar${isSidebarOpen && !isMobile ? ' is-shifted' : ''}`}>
+        <button
+          className="btn-directory"
+          aria-expanded={isSidebarOpen}
+          onClick={() => setIsSidebarOpen((o) => !o)}
+        >
+          <span className="burger">
+            <i />
+            <i />
+            <i />
+          </span>
+          <span>{isSidebarOpen && !isMobile ? t('hide') : t('directory')}</span>
+        </button>
+
+        <div className="lang-switch" role="group" aria-label={t('language')}>
+          <button
+            className={lang === 'en' ? 'is-on' : ''}
+            aria-pressed={lang === 'en'}
+            onClick={() => setLang('en')}
           >
-            {isSidebarOpen ? (isMobile ? '✖ CLOSE DIRECTORY' : '◀ HIDE DIRECTORY') : '☰ SHOW DIRECTORY'}
+            EN
+          </button>
+          <button
+            className={lang === 'pt' ? 'is-on' : ''}
+            aria-pressed={lang === 'pt'}
+            onClick={() => setLang('pt')}
+          >
+            PT
           </button>
         </div>
 
-        {/* TOPO DIREITA: PLAYER COMPACTO */}
-        <div className={`top-right-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
-          {currentStation && (
-            <div className="player-wrapper" style={{ width: isMobile ? '100%' : '160px' }}>
-              <Player station={currentStation} favorites={favorites} toggleFavorite={toggleFavorite} />
-            </div>
-          )}
+        <div className="brand">
+          <span className="brand-dot" />
+          <span>RadioMoa</span>
+          <span className="brand-count">
+            {stations.length} {t('stationsLive')}
+          </span>
         </div>
+      </header>
 
-        {/* MEIO DIREITA: BOTOES DE ZOOM */}
-        <div className="mid-right-area">
-          <button className="zoom-btn" onClick={() => handleZoom('in')} style={zoomBtnStyle}>+</button>
-          <button className="zoom-btn" onClick={() => handleZoom('out')} style={zoomBtnStyle}>-</button>
+      {/* PLAYER */}
+      {currentStation && (
+        <div className={`player-dock${showPlayer ? ' is-open' : ''}`}>
+          <Player
+            station={currentStation}
+            active={showPlayer}
+            favorites={favorites}
+            toggleFavorite={toggleFavorite}
+            onClose={() => setShowPlayer(false)}
+          />
         </div>
+      )}
 
-        {/* BAIXO ESQUERDA: FOOTER DO PIX */}
-        <div className={`bottom-left-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
-          <div className={`interactive-ui left ${isInteracting ? 'dimmed' : ''}`}>
-            <div className="pix-box" style={{
-              display: 'flex', alignItems: 'center', gap: '20px',
-              background: 'rgba(2, 6, 23, 0.85)', padding: '16px 20px', borderRadius: '12px',
-              border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: '#e2e8f0', fontFamily: 'sans-serif',
-              width: 'max-content', maxWidth: '100%'
-            }}>
-              <div style={{ background: '#ffffff', padding: '6px', borderRadius: '8px', border: '1px solid rgba(6, 182, 212, 0.8)', flexShrink: 0 }}>
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${pixPayloadEncoded}&color=000000&bgcolor=ffffff`}
-                  alt="Pix QR Code" 
-                  style={{ width: '85px', height: '85px', display: 'block' }} 
-                />
+      {currentStation && !showPlayer && (
+        <button className="player-reopen" onClick={() => setShowPlayer(true)} aria-label={t('reopenPlayer')}>
+          <span className="live-dot" />
+          <span className="txt">{currentStation.name}</span>
+        </button>
+      )}
+
+      {/* ZOOM */}
+      <div className="zoom">
+        <button onClick={() => handleZoom('in')} aria-label={t('zoomIn')}>+</button>
+        <button onClick={() => handleZoom('out')} aria-label={t('zoomOut')}>−</button>
+      </div>
+
+      {/* PAINÉIS INFERIORES */}
+      <div className="dock">
+        <div className={`panel panel-pix${openPanel === 'pix' ? ' is-open' : ''}`}>
+          <button
+            className="panel-toggle"
+            aria-expanded={openPanel === 'pix'}
+            onClick={() => togglePanel('pix')}
+          >
+            <span className="heart">♥</span>
+            <span>{t('supportProject')}</span>
+            <span className="chev" />
+          </button>
+          <div className="panel-body">
+            <div className="pix-card">
+              <div className="pix-qr">
+                <img src={PIX_QR_URL} alt={t('qrAlt')} />
               </div>
-              <div className="pix-texts" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px' }}>SUPPORT PROJECT</span>
-                <span style={{ color: '#f8fafc', fontSize: '12px' }}>
-                  PIX: <strong style={{ color: '#06b6d4', display: 'block', marginTop: '2px' }}>moacirsistemax@gmail.com</strong>
-                </span>
-                <span style={{ color: '#64748b', fontSize: '10px' }}>© 2026 Moacir Fernandes</span>
+              <div className="pix-info">
+                <span className="eyebrow">Pix</span>
+                <span className="pix-key">{PIX_KEY}</span>
+                <button className="copy-btn" onClick={copyPix}>
+                  {copied ? t('copied') : t('copyKey')}
+                </button>
               </div>
             </div>
+            <p className="panel-foot">© 2026 Moacir Fernandes</p>
           </div>
         </div>
 
-        {/* BAIXO DIREITA: FOOTER DE E-BOOKS (CENTRALIZADO) */}
-        <div className={`bottom-right-area ${isMobile && isSidebarOpen ? 'hide-when-sidebar-open' : ''}`}>
-          <div className={`interactive-ui right ${isInteracting ? 'dimmed' : ''}`}>
-            <div className="ebooks-container" style={{ 
-              display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center',
-              background: 'rgba(2, 6, 23, 0.85)', padding: '16px 20px', borderRadius: '12px',
-              border: '1px solid rgba(6, 182, 212, 0.25)', backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)', maxWidth: '100%'
-            }}>
-              <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textAlign: 'center', marginBottom: '2px' }}>
-                MATERIAL DE APOIO - TECNOLOGIA & INOVAÇÃO
-              </span>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', columnGap: '20px', rowGap: '8px' }}>
-                <a className="ebook-link" href="https://go.hotmart.com/L108214592F" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Eng. de Software e Banco de Dados</a>
-                <a className="ebook-link" href="https://go.hotmart.com/V108213402L" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Fundamentos e Indústria 4.0</a>
-                <a className="ebook-link" href="https://go.hotmart.com/N108214728C" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Gestão de Projetos e Startups</a>
-                <a className="ebook-link" href="https://go.hotmart.com/F108230377L" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Guia Prático de Deploy & Ágil</a>
-                <a className="ebook-link" href="https://go.hotmart.com/L108230120I" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• IA Vertical com ChatGPT</a>
-                <a className="ebook-link" href="https://go.hotmart.com/X108214950O" target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'none', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• Trilha: Desenv. Sistemas (Combo)</a>
-              </div>
-            </div>
+        <div className={`panel panel-ebooks${openPanel === 'ebooks' ? ' is-open' : ''}`}>
+          <button
+            className="panel-toggle"
+            aria-expanded={openPanel === 'ebooks'}
+            onClick={() => togglePanel('ebooks')}
+          >
+            <span>{t('studyMaterials')}</span>
+            <span className="chev" />
+          </button>
+          <div className="panel-body">
+            <p className="eyebrow">{t('techTitle')}</p>
+            <ul className="ebook-list">
+              {EBOOKS.map((e) => (
+                <li key={e.url}>
+                  <a className="ebook-link" href={e.url} target="_blank" rel="noopener noreferrer">
+                    <span>{e.title}</span>
+                    <span className="arrow">↗</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
-
-const zoomBtnStyle = {
-  background: 'rgba(15, 23, 42, 0.7)', color: '#06b6d4', border: '1px solid rgba(6, 182, 212, 0.4)', 
-  width: '44px', height: '44px', fontSize: '24px', cursor: 'pointer', borderRadius: '8px',
-  backdropFilter: 'blur(10px)', transition: '0.2s', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center'
-};
