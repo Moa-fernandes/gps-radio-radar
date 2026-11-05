@@ -66,7 +66,8 @@ a:focus-visible,
   inset: 0;
   z-index: 0;
   cursor: grab;
-  touch-action: none; /* evita que o navegador "roube" o gesto do globo */
+  touch-action: none;
+  /* evita que o navegador "roube" o gesto do globo */
 }
 
 .globe-layer:active {
@@ -78,41 +79,384 @@ a:focus-visible,
   cursor: inherit;
 }
 
-/* ===================== LOADER ===================== */
+/* ===================== LOADER (SHOW DE 7 SEGUNDOS) ===================== */
 .loader {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: var(--bg);
+  gap: 14px;
+  overflow: hidden;
+  padding: calc(16px + var(--safe-top)) 20px calc(16px + var(--safe-bottom));
+  background:
+    radial-gradient(circle at 50% 36%, rgba(8, 145, 178, 0.22), transparent 55%),
+    radial-gradient(circle at 50% 100%, rgba(251, 191, 36, 0.06), transparent 50%),
+    var(--bg);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease), visibility 0.8s;
 }
 
-.loader h1 {
-  margin: 14px 0 0;
-  font-size: 24px;
-  letter-spacing: 0.2em;
-  color: var(--text);
+.loader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(34, 211, 238, 0.035) 0 1px, transparent 1px 4px);
 }
 
-.loader p {
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.25em;
-  color: var(--cyan);
-  font-weight: 600;
+.loader.is-exit {
+  opacity: 0;
+  transform: scale(1.06);
+  visibility: hidden;
 }
 
-.loader-ring {
-  width: 44px;
-  height: 44px;
+/* RADAR */
+.radar {
+  position: relative;
+  width: min(56vw, 220px);
+  aspect-ratio: 1;
   border-radius: 50%;
-  border: 3px solid rgba(34, 211, 238, 0.18);
-  border-top-color: var(--cyan);
-  animation: spin 0.9s linear infinite;
+  border: 1px solid var(--border-accent);
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.07), transparent 70%);
+  box-shadow: 0 0 60px rgba(34, 211, 238, 0.14), inset 0 0 40px rgba(34, 211, 238, 0.06);
+  overflow: hidden;
+}
+
+.globe-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.globe-grid path {
+  fill: none;
+  stroke: rgba(34, 211, 238, 0.6);
+  stroke-width: 0.6;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 2.2s var(--ease) forwards;
+}
+
+.radar-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(34, 211, 238, 0.45), rgba(34, 211, 238, 0) 28%);
+  animation: spin 2.4s linear infinite;
+}
+
+.radar-blip {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan), 0 0 22px rgba(34, 211, 238, 0.5);
+  transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0;
+  animation: blip 3.2s ease-out infinite;
+}
+
+.radar-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--amber);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 14px var(--amber);
+}
+
+/* TEXTOS */
+.loader-kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  animation: fadeUp 0.6s 0.1s var(--ease) both;
+}
+
+.loader-title {
+  margin: 0;
+  font-size: clamp(32px, 9vw, 44px);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  color: transparent;
+  background: linear-gradient(90deg, #f1f5f9 0%, #22d3ee 50%, #f1f5f9 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+.loader-title span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: letterIn 0.6s var(--ease) forwards;
+}
+
+/* EQUALIZADOR */
+.eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 26px;
+}
+
+.eq span {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #22d3ee, rgba(34, 211, 238, 0.2));
+  transform-origin: bottom;
+  animation: eqBar var(--d) ease-in-out var(--delay) infinite alternate;
+}
+
+.loader-phrase {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: 13px;
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  animation: fadeUp 0.5s var(--ease) both;
+}
+
+/* DIAL */
+.dial {
+  --dial-w: min(70vw, 280px);
+  position: relative;
+  width: var(--dial-w);
+  height: 34px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.dial-ticks {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
+
+.dial-ticks i {
+  width: 1px;
+  height: 7px;
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.dial-ticks i.major {
+  height: 14px;
+  background: var(--cyan);
+}
+
+.dial-needle {
+  position: absolute;
+  left: 0;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--amber);
+  box-shadow: 0 0 10px var(--amber);
+  animation: needle 4.2s cubic-bezier(0.3, 0.7, 0.2, 1) 0.5s both;
+}
+
+.dial-readout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dial-label {
+  color: var(--amber);
+  opacity: 0;
+  animation: fadeUp 0.4s 4.7s var(--ease) forwards;
+}
+
+.dial-mhz {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 500;
+}
+
+.dial-lamp {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.3);
+  animation: lampOn 0.3s 4.7s both;
+}
+
+/* MORSE */
+.morse {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 14px;
+  margin-top: 28px;
+}
+
+.morse .sym {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--cyan);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.7);
+  opacity: 0.15;
+  animation: morseOn 0.3s var(--delay-ease, ease) both;
+  animation-delay: var(--d);
+}
+
+.morse .sym.dot {
+  width: 5px;
+}
+
+.morse .sym.dash {
+  width: 16px;
+}
+
+.morse-gap {
+  display: block;
+  width: 10px;
+}
+
+/* KEYFRAMES */
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes needle {
+  0% {
+    transform: translateX(0);
+  }
+
+  85% {
+    transform: translateX(calc(var(--dial-w) * 0.52));
+  }
+
+  100% {
+    transform: translateX(calc(var(--dial-w) * 0.5));
+  }
+}
+
+@keyframes lampOn {
+  from {
+    background: rgba(148, 163, 184, 0.3);
+    box-shadow: none;
+  }
+
+  to {
+    background: var(--amber);
+    box-shadow: 0 0 12px var(--amber);
+  }
+}
+
+@keyframes morseOn {
+  0% {
+    opacity: 0.15;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes eqBar {
+  from {
+    transform: scaleY(0.15);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes blip {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+
+  8% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+
+  30% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+}
+
+@keyframes letterIn {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* CELULAR DEITADO: reduz tudo para caber na altura */
+@media (max-height: 500px) {
+  .radar {
+    width: 130px;
+  }
+
+  .loader {
+    gap: 8px;
+  }
+
+  .morse {
+    margin-top: 16px;
+  }
 }
 
 /* ===================== TOPBAR ===================== */
@@ -128,7 +472,7 @@ a:focus-visible,
   transition: left 0.35s var(--ease);
 }
 
-.topbar > * {
+.topbar>* {
   pointer-events: auto;
 }
 
@@ -459,7 +803,8 @@ a:focus-visible,
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  pointer-events: none; /* só os botões capturam toque */
+  pointer-events: none;
+  /* só os botões capturam toque */
   transition: opacity 0.35s ease;
 }
 
@@ -712,7 +1057,8 @@ a:focus-visible,
   border: 1px solid var(--border);
   background: rgba(15, 23, 42, 0.8);
   color: var(--text);
-  font-size: 16px; /* 16px evita o zoom automático no iOS */
+  font-size: 16px;
+  /* 16px evita o zoom automático no iOS */
   outline: none;
 }
 
@@ -947,9 +1293,11 @@ a:focus-visible,
   0% {
     box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.6);
   }
+
   70% {
     box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
   }
@@ -966,6 +1314,7 @@ a:focus-visible,
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -986,6 +1335,7 @@ a:focus-visible,
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -993,35 +1343,167 @@ a:focus-visible,
     transition-duration: 0.01ms !important;
   }
 
-/* ===================== SELETOR DE IDIOMA ===================== */
-.lang-switch {
-  display: inline-flex;
-  height: 40px;
-  padding: 3px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-strong);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
+  /* ===================== SELETOR DE IDIOMA ===================== */
+  .lang-switch {
+    display: inline-flex;
+    height: 40px;
+    padding: 3px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-strong);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
 
-.lang-switch button {
-  min-width: 38px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
+  .lang-switch button {
+    min-width: 38px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
 
-.lang-switch button.is-on {
-  background: linear-gradient(135deg, #22d3ee, #0891b2);
-  color: #020617;
-}
+  .lang-switch button.is-on {
+    background: linear-gradient(135deg, #22d3ee, #0891b2);
+    color: #020617;
+  }
+
+  /* ===================== AJUSTES DO LOADER (ANIMAÇÃO EXTRA) ===================== */
+
+  /* Título: degradê aplicado em cada letra, para aparecer em todos os navegadores */
+  .loader-title {
+    background: none;
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    color: #f1f5f9;
+    animation: none;
+  }
+
+  .loader-title span {
+    background: linear-gradient(180deg, #ffffff 0%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: letterIn 0.6s var(--ease) forwards, flicker 6s 2.6s infinite;
+  }
+
+  /* Radar: entrada com zoom e brilho pulsando */
+  .radar {
+    animation: radarIn 1s var(--ease) both, radarGlow 2.8s ease-in-out 1s infinite;
+  }
+
+  /* Ondas que saem do centro, como um sinal sendo emitido */
+  .radar-ripple {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid rgba(34, 211, 238, 0.7);
+    transform: translate(-50%, -50%) scale(0.05);
+    opacity: 0;
+    animation: ripple 2.8s ease-out infinite;
+    pointer-events: none;
+  }
+
+  .radar-ripple.a {
+    animation-delay: 0s;
+  }
+
+  .radar-ripple.b {
+    animation-delay: 0.93s;
+  }
+
+  .radar-ripple.c {
+    animation-delay: 1.86s;
+  }
+
+  /* Lâmpada do dial: pisca depois de travar o sinal */
+  .dial-lamp {
+    animation: lampOn 0.3s 4.7s both, lampPulse 1.2s 5s infinite;
+  }
+
+  /* Equalizador: barras mais vivas */
+  .eq span {
+    box-shadow: 0 0 6px rgba(34, 211, 238, 0.5);
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: translate(-50%, -50%) scale(0.05);
+      opacity: 0.9;
+    }
+
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+    }
+  }
+
+  @keyframes radarIn {
+    from {
+      opacity: 0;
+      transform: scale(0.6) rotate(-90deg);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes radarGlow {
+
+    0%,
+    100% {
+      box-shadow: 0 0 60px rgba(34, 211, 238, 0.14), inset 0 0 40px rgba(34, 211, 238, 0.06);
+    }
+
+    50% {
+      box-shadow: 0 0 90px rgba(34, 211, 238, 0.3), inset 0 0 50px rgba(34, 211, 238, 0.12);
+    }
+  }
+
+  @keyframes flicker {
+
+    0%,
+    92%,
+    100% {
+      filter: brightness(1);
+    }
+
+    93% {
+      filter: brightness(1.8);
+    }
+
+    94% {
+      filter: brightness(0.6);
+    }
+
+    96% {
+      filter: brightness(1.4);
+    }
+  }
+
+  @keyframes lampPulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 8px var(--amber);
+      transform: scale(1);
+    }
+
+    50% {
+      box-shadow: 0 0 22px var(--amber);
+      transform: scale(1.3);
+    }
+  }
 
 }

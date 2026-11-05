@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import Globe from 'react-globe.gl';
 import Player from './components/Player';
 import Sidebar from './components/Sidebar';
+import Loader from './components/Loader';
 import { fetchGlobalStations } from './data/radios';
 import { useI18n } from './i18n';
 import type { RadioStation } from './types';
@@ -160,13 +161,8 @@ export default function App() {
 
   return (
     <div className={`app${isDragging ? ' is-dragging' : ''}`}>
-      {isLoading && (
-        <div className="loader">
-          <div className="loader-ring" />
-          <h1>Welcome RadioMoa</h1>
-          <p>{t('loading')}</p>
-        </div>
-      )}
+      {/* LOADER (show de 7 segundos) */}
+      <Loader done={!isLoading} />
 
       {/* GLOBO */}
       <div
@@ -279,7 +275,11 @@ export default function App() {
       )}
 
       {currentStation && !showPlayer && (
-        <button className="player-reopen" onClick={() => setShowPlayer(true)} aria-label={t('reopenPlayer')}>
+        <button
+          className="player-reopen"
+          onClick={() => setShowPlayer(true)}
+          aria-label={t('reopenPlayer')}
+        >
           <span className="live-dot" />
           <span className="txt">{currentStation.name}</span>
         </button>

@@ -38,6 +38,11 @@ const dict = {
     reopenPlayer: 'Reopen player',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
+    welcome: 'Welcome to',
+    loadStep1: 'Scanning the globe...',
+    loadStep2: 'Tuning into the world...',
+    loadStep3: 'Locking on signals...',
+    locked: 'Signal locked',
   },
   pt: {
     loading: 'Carregando... GPS',
@@ -71,6 +76,11 @@ const dict = {
     reopenPlayer: 'Reabrir player',
     zoomIn: 'Aproximar',
     zoomOut: 'Afastar',
+    welcome: 'Bem-vindo ao',
+    loadStep1: 'Varrendo o globo...',
+    loadStep2: 'Sintonizando o mundo...',
+    loadStep3: 'Captando sinais...',
+    locked: 'Sinal travado',
   },
 } as const;
 
