@@ -6,7 +6,7 @@
 
 ## 🇧🇷 Versão em Português
 
-Uma aplicação web imersiva em 3D que simula um radar de rádio global em tempo real, inspirada no conceito do *Radio Garden*. O projeto permite explorar o planeta através de um globo terrestre interativo, sintonizar mais de 2.000 estações de rádio reais ao redor do mundo, visualizar o fuso horário local atualizado segundo a segundo e controlar a transmissão através de uma interface de painel futurista (*Glassmorphism*).
+Uma aplicação web imersiva em 3D que simula um radar de rádio global em tempo real. O projeto permite explorar o planeta através de um globo terrestre interativo, sintonizar mais de 500 estações de rádio reais ao redor do mundo, visualizar o fuso horário local atualizado segundo a segundo e controlar a transmissão através de uma interface de painel futurista (*Glassmorphism*).
 
 ### 🚀 Tecnologias Utilizadas
 Este projeto foi arquitetado aplicando padrões modernos de engenharia de software e alta performance:
